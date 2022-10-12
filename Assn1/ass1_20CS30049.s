@@ -61,7 +61,7 @@ main:														# start of main
 # printf("Length of the string: %d\n", len);
 	movl	-68(%rbp), %eax									# load value of 'len' from -68(%rbp) into eax
 	movl	%eax, %esi										# move value of 'len' to esi. This is passed as the 2nd argument to printf function.
-	leaq	.LC2(%rip), %rdi								# load effective address of format string for printing string length (see .LC2) into rdi register. This will be the 1st argument passed to printf function.
+	leaq	.LC2(%rip), %rdi								# load e ffective address of format string for printing string length (see .LC2) into rdi register. This will be the 1st argument passed to printf function.
 	movl	$0, %eax										# set value of eax register to 0
 	call	printf@PLT										# call printf function
 
@@ -168,7 +168,7 @@ sort:
 	movl	$0, -4(%rbp)									# initialize loop counter 'j' to zero, store it in address -4(%rbp)
 	jmp	.L10												# unconditional jump to label .L10
 
-.L12:														# label for inner loop body
+.L12:													/	# label for inner loop body
 	movl	-8(%rbp), %eax									# moves value of 'i' (stored at -8(%rbp)) to eax
 	movslq	%eax, %rdx										# moves value of 'i' as :- rdx <-- eax (signed extension from 32-bit to 64-bit)
 	movq	-24(%rbp), %rax									# moves 'str''s starting address, stored at -24(%rbp), to rax
