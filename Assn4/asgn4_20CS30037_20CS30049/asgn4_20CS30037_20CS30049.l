@@ -2,12 +2,12 @@
     #include <stdio.h>
     #include "y.tab.h"
     #define KEYWORD                         500
-    #define PUNCTUATOR                      506
-    #define SINGLE_LINE_COMMENT_START       507
-    #define SINGLE_LINE_COMMENT_END         508
-    #define MULTI_LINE_COMMENT_START        509
-    #define MULTI_LINE_COMMENT_END          510
-    #define INVALID_TOKEN                   511
+    #define PUNCTUATOR                      501
+    #define SINGLE_LINE_COMMENT_START       502
+    #define SINGLE_LINE_COMMENT_END         503
+    #define MULTI_LINE_COMMENT_START        504
+    #define MULTI_LINE_COMMENT_END          505
+    #define INVALID_TOKEN                   506
 %}
 
 %option yylineno
@@ -128,12 +128,6 @@ WHITE_SPACE     [ \n\t]
 "&="                            { return BITWISE_AND_ASSIGNMENT; }
 "|="                            { return BITWISE_OR_ASSIGNMENT; }
 "^="                            { return BITWISE_XOR_ASSIGNMENT; }
-
-{IDENTIFIER}                      { return IDENTIFIER; }
-{INT_CONSTANT}                    { return INT_CONSTANT;}
-{FLOAT_CONSTANT}                  { return FLOAT_CONSTANT;}
-{CHAR_CONSTANT}                   { return CHAR_CONSTANT; }
-{STRING_LITERAL}                  { return STRING_LITERAL; }
 
 "//"                            { BEGIN(SINGLE_LINE_COMMENT);   }
 <SINGLE_LINE_COMMENT>"\n"       { BEGIN(INITIAL);   }
