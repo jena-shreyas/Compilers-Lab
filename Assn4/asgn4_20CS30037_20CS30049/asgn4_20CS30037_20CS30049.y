@@ -48,7 +48,7 @@ primary_expression: IDENTIFIER
                     {    printf("primary-expression ==> constant\n");   } 
                     
                     | STRING_LITERAL 
-                    {    printf("primary-expression ==> identifier\n");   } 
+                    {    printf("primary-expression ==> string-literal\n");   } 
                     
                     | LEFT_PAREN expression RIGHT_PAREN
                     {    printf("primary-expression ==> ( expression )\n");   }
