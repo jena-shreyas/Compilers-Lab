@@ -5,8 +5,8 @@
 using namespace std;
 
 // External variables
-extern symbolTable globalST;
-extern symbolTable* ST;
+extern SymbolTable globalST;
+extern SymbolTable* ST;
 extern quadArray quadList;
 
 // Declare global variables
@@ -20,8 +20,8 @@ string asmFileName;
 
 // Prints the global information to the assembly file
 void printGlobal(ofstream& sfile) {
-    for(vector<symbol*>::iterator it = globalST.symbols.begin(); it != globalST.symbols.end(); it++) {
-        symbol* sym = *it;
+    for(vector<Symbol*>::iterator it = globalST.symbols.begin(); it != globalST.symbols.end(); it++) {
+        Symbol* sym = *it;
         if(sym->type.type == CHAR && sym->name[0] != 't') {
             if(sym->initVal != NULL) {
                 sfile << "\t.globl\t" << sym->name << endl;
@@ -95,12 +95,12 @@ void quadCode(quad q, ofstream& sfile) {
     string toPrint1 = "", toPrint2 = "", toPrintRes = "";
     int off1 = 0, off2 = 0, offRes = 0;
 
-    symbol* loc1 = ST->lookup(q.arg1);
-    symbol* loc2 = ST->lookup(q.arg2);
-    symbol* loc3 = ST->lookup(q.result);
-    symbol* glb1 = globalST.searchGlobal(q.arg1);
-    symbol* glb2 = globalST.searchGlobal(q.arg2);
-    symbol* glb3 = globalST.searchGlobal(q.result);
+    Symbol* loc1 = ST->lookup(q.arg1);
+    Symbol* loc2 = ST->lookup(q.arg2);
+    Symbol* loc3 = ST->lookup(q.result);
+    Symbol* glb1 = globalST.searchGlobal(q.arg1);
+    Symbol* glb2 = globalST.searchGlobal(q.arg2);
+    Symbol* glb3 = globalST.searchGlobal(q.result);
 
     if(ST != &globalST) {
         if(glb1 == NULL)
@@ -333,11 +333,11 @@ void quadCode(quad q, ofstream& sfile) {
         else
             t = loc3->type.type;
         if(t == INT)
-            paramSize = __INTEGER_SIZE;
+            paramSize = _SIZE_INT;
         else if(t == CHAR)
-            paramSize = __CHARACTER_SIZE;
+            paramSize = _SIZE_CHAR;
         else
-            paramSize = __POINTER_SIZE;
+            paramSize = _SIZE_POINTER;
         stringstream ss;
         if(q.result[0] == '.')
             ss << "\tmovq\t$" << toPrintRes << ", %rax" <<endl;
@@ -446,8 +446,8 @@ void quadCode(quad q, ofstream& sfile) {
 void generateTargetCode(ofstream& sfile) {
     printGlobal(sfile);
     printStrings(sfile);
-    symbolTable* currFuncTable = NULL;
-    symbol* currFunc = NULL;
+    SymbolTable* currFuncTable = NULL;
+    Symbol* currFunc = NULL;
     setLabels();
 
     for(int i = 0; i < (int)quadList.quads.size(); i++) {

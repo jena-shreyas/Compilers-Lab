@@ -1,3 +1,13 @@
+/* 
+ Compilers Lab : Assignment 6
+ Group Members:
+    1. Pranav Nyati (20CS30037)
+    2. Shreyas Jena (20CS30049)
+*/
+
+// Header File for declaring Data Structures (Class Definitions) 
+// & Global Function Prototypes
+
 #ifndef __ASSN6_TRANSLATOR_H
 #define __ASSN6_TRANSLATOR_H
 
@@ -7,27 +17,12 @@
 #include <map>
 using namespace std;
 
-/*
-    Sizes for basic data types, according to x86_64 architecture.
-    To target a different platform, the sizes can be changed here itself.
-
-    List of sizes
-    -------------
-    void        0 bytes
-    function    0 bytes
-    char        1 byte
-    int         4 bytes
-    pointer     8 bytes
-    float       8 bytes
-
-*/
-
-#define _SIZE_VOID 0
-#define _SIZE_FUNCTION 0
-#define _SIZE_CHAR 1
-#define _SIZE_INT 4
-#define _SIZE_POINTER 8
-#define _SIZE_FLOAT 8
+#define _SIZE_VOID      0        // void : 0 bytes
+#define _SIZE_CHAR      1        // char : 1 byte
+#define _SIZE_INT       4        // int  : 4 bytes
+#define _SIZE_FLOAT     8        // float: 8 bytes
+#define _SIZE_POINTER   4        // pointer: 4 bytes
+#define _SIZE_FUNCTION  0        // function: 0 bytes
 
 /*
     An enum for all data types
@@ -66,7 +61,7 @@ typedef enum  {
     quad            Denotes a quad in the Three Address Code translation
     quadArray       Denotes the entire list of quads for lazy spitting
 */
-class symbol;
+class Symbol;
 class SymbolType;
 class SymbolValue;
 class SymbolTable;
@@ -139,7 +134,7 @@ public:
         symbol()
         - Constructor
 */
-class symbol {
+class Symbol {
 public:
     string name;
     SymbolType type;
@@ -148,7 +143,7 @@ public:
     int offset;
     SymbolTable* nestedTable;
 
-    symbol();
+    Symbol();
 };
 
 
@@ -175,14 +170,14 @@ public:
 */
 class SymbolTable {
 public:
-    map<string, symbol*> table;
-    vector<symbol*> symbols;
+    map<string, Symbol*> table;
+    vector<Symbol*> symbols;
     int offset;
     static int tempCount;
 
     SymbolTable();
-    symbol* lookup(string name, DataType t = INT, int pc = 0);
-    symbol* searchGlobal(string name);
+    Symbol* lookup(string name, DataType t = INT, int pc = 0);
+    Symbol* searchGlobal(string name);
     string gentemp(DataType t = INT);
 
     void print(string tableName);
@@ -267,7 +262,7 @@ public:
         expression()
         - Constructor
 */
-class expression {
+class Expression {
 public:
     int instr;
     DataType type;
@@ -278,7 +273,7 @@ public:
     int fold;
     string* folder;
 
-    expression();
+    Expression();
 };
 
 
@@ -301,7 +296,7 @@ public:
     DataType type;
     DataType nextType;
     vector<int> li;
-    expression* initVal;
+    Expression* initVal;
     int pc;
 };
 
@@ -336,14 +331,14 @@ void backpatch(list<int> l, int address);
 /*
     Converts a symbol of one type to another and returns a pointer to the converted symbol
 */
-void convertToType(expression* arg, expression* res, DataType toType);
+void convertToType(Expression* arg, Expression* res, DataType toType);
 
 void convertToType(string t, DataType to, string f, DataType from);
 
 /*
     Converts an int to a bool and adds required attributes
 */
-void convertIntToBool(expression* expr);
+void convertIntToBool(Expression* expr);
 
 /*
     Auxiliary function to get the size of a type
@@ -358,6 +353,6 @@ string checkType(SymbolType t);
 /*
     Auxiliary function to get the initial value of a symbol
 */
-string getInitVal(symbol* sym);
+string getInitVal(Symbol* sym);
 
 #endif

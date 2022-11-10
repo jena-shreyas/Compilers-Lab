@@ -145,11 +145,11 @@ WS                              [ \t\n]
 ","                             { return COMMA; }
 "#"                             { return HASH; }
 
-{IDENTIFIER}                    { yylval.str = new string(yytext); return IDENTIFIER; }
+{IDENTIFIER}                    { yylval.strval = new string(yytext); return IDENTIFIER; }
 {INT_CONSTANT}                  { yylval.intval = atoi(yytext); return INT_CONSTANT; }
 {FLOAT_CONSTANT}                { yylval.floatval = atof(yytext); return FLOAT_CONSTANT; }
 {CHAR_CONSTANT}                 { yylval.charval = yytext[1]; return CHAR_CONSTANT; }
-{STRING_LITERAL}                { yylval.str = new string(yytext); return STRING_LITERAL; }
+{STRING_LITERAL}                { yylval.strval = new string(yytext); return STRING_LITERAL; }
 {WS}                            { /* ignore whitespaces */ }
 
 %%

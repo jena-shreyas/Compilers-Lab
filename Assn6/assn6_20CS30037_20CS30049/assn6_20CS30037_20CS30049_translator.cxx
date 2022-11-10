@@ -31,15 +31,15 @@ void SymbolValue::setInitVal(float val) {
 
 
 // Implementations of constructors and functions for the symbol class
-symbol::symbol(): nestedTable(NULL) {}
+Symbol::Symbol(): nestedTable(NULL) {}
 
 
 // Implementations of constructors and functions for the SymbolTable class
 SymbolTable::SymbolTable(): offset(0) {}
 
-symbol* SymbolTable::lookup(string name, DataType t, int pc) {
+Symbol* SymbolTable::lookup(string name, DataType t, int pc) {
     if(table.count(name) == 0) {
-        symbol* sym = new symbol();
+        Symbol* sym = new Symbol();
         sym->name = name;
         sym->type.type = t;
         sym->offset = offset;
@@ -61,7 +61,7 @@ symbol* SymbolTable::lookup(string name, DataType t, int pc) {
     return table[name];
 }
 
-symbol* SymbolTable::searchGlobal(string name) {
+Symbol* SymbolTable::searchGlobal(string name) {
     return (table.count(name) ? table[name] : NULL);
 }
 
@@ -70,7 +70,7 @@ string SymbolTable::gentemp(DataType t) {
     string tempName = "t" + to_string(SymbolTable::tempCount++);
     
     // Initialize the required attributes
-    symbol* sym = new symbol();
+    Symbol* sym = new Symbol();
     sym->name = tempName;
     sym->size = sizeOfType(t);
     sym->offset = offset;
@@ -111,7 +111,7 @@ void SymbolTable::print(string tableName) {
 
     // Print the symbols in the symbol table
     for(int i = 0; i < (int)symbols.size(); i++) {
-        symbol* sym = symbols[i];
+        Symbol* sym = symbols[i];
         cout << left << setw(25) << sym->name;
         cout << left << setw(25) << checkType(sym->type);
         cout << left << setw(20) << getInitVal(sym);
@@ -255,7 +255,7 @@ void quadArray::print() {
 
 
 // Implementations of constructors and functions for the expression class
-expression::expression(): fold(0), folder(NULL) {}
+Expression::Expression(): fold(0), folder(NULL) {}
 
 
 // Overloaded emit functions
@@ -306,7 +306,7 @@ void backpatch(list<int> l, int address) {
 
 
 // Implementation of the overloaded convertToType functions
-void convertToType(expression* arg, expression* res, DataType toType) {
+void convertToType(Expression* arg, Expression* res, DataType toType) {
     if(res->type == toType)
         return;
 
@@ -355,7 +355,7 @@ void convertToType(string t, DataType to, string f, DataType from) {
 }
 
 // Implementation of the convertIntToBool function
-void convertIntToBool(expression* expr) {
+void convertIntToBool(Expression* expr) {
     if(expr->type != BOOL) {
         expr->type = BOOL;
         expr->falselist = makelist(nextinstr);    // Add falselist for boolean expressions
@@ -433,7 +433,7 @@ string checkType(SymbolType t) {
 }
 
 // Implementation of the getInitVal function
-string getInitVal(symbol* sym) {
+string getInitVal(Symbol* sym) {
     if(sym->initVal != NULL) {
         if(sym->type.type == INT)
             return to_string(sym->initVal->i);

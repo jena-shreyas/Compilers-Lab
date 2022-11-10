@@ -11,8 +11,8 @@
 
     extern int nextinstr;                   // Used for keeping track of the next instruction
     extern quadArray quadList;              // List of all quads
-    extern symbolTable globalST;            // Global symbol table
-    extern symbolTable* ST;                 // Pointer to the current symbol table
+    extern SymbolTable globalST;            // Global symbol table
+    extern SymbolTable* ST;                 // Pointer to the current symbol table
     extern vector<string> stringConsts;     // List of all string constants
 
     int strCount = 0;                       // Counter for string constants
@@ -24,11 +24,11 @@
     float floatval;                 // For a float value
     string* strval;                    // For a string
     void* ptr;                      // For a pointer
-    symbolType* symType;            // For the type of a symbol
-    symbol* symp;                   // For a symbol
+    SymbolType* symType;            // For the type of a symbol
+    Symbol* symp;                   // For a symbol
     DataType types;                 // For the type of an expression
     opcode opc;                     // For an opcode
-    expression* expr;               // For an expression
+    Expression* expr;               // For an expression
     declaration* dec;               // For a declaration
     vector<declaration*> *decList;  // For a list of declarations
     param* prm;                     // For a parameter
@@ -125,41 +125,41 @@
 primary_expression: 
         IDENTIFIER
         {
-            $$ = new expression();  // Create new expression
+            $$ = new Expression();  // Create new expression
             string s = *($1);
             ST->lookup(s);          // Store entry in the symbol table
             $$->loc = s;            // Store pointer to string identifier name
         }
         | INT_CONSTANT
         {
-            $$ = new expression();                  // Create new expression
+            $$ = new Expression();                  // Create new expression
             $$->loc = ST->gentemp(INT);             // Generate a new temporary variable
             emit($$->loc, $1, ASSIGN);
-            symbolValue* val = new symbolValue();
+            SymbolValue* val = new SymbolValue();
             val->setInitVal($1);                    // Set the initial value
             ST->lookup($$->loc)->initVal = val;     // Store in symbol table
         }
         | FLOAT_CONSTANT
         {
-            $$ = new expression();                  // Create new expression
+            $$ = new Expression();                  // Create new expression
             $$->loc = ST->gentemp(FLOAT);           // Generate a new temporary variable
             emit($$->loc, $1, ASSIGN);
-            symbolValue* val = new symbolValue();
+            SymbolValue* val = new SymbolValue();
             val->setInitVal($1);                    // Set the initial value
             ST->lookup($$->loc)->initVal = val;     // Store in symbol table
         }
         | CHAR_CONSTANT
         {
-            $$ = new expression();                  // Create new expression
+            $$ = new Expression();                  // Create new expression
             $$->loc = ST->gentemp(CHAR);            // Generate a new temporary variable
             emit($$->loc, $1, ASSIGN);
-            symbolValue* val = new symbolValue();
+            SymbolValue* val = new SymbolValue();
             val->setInitVal($1);                    // Set the initial value
             ST->lookup($$->loc)->initVal = val;     // Store in symbol table
         }
         | STRING_LITERAL
         {
-            $$ = new expression();                  // Create new expression
+            $$ = new Expression();                  // Create new expression
             $$->loc = ".LC" + to_string(strCount++);
             stringConsts.push_back(*($1));          // Add to the list of string constants
         }
@@ -174,7 +174,7 @@ postfix_expression:
         {}
         | postfix_expression LEFT_SQR_BRACKET expression RIGHT_SQR_BRACKET
         {
-            symbolType to = ST->lookup($1->loc)->type;      // Get the type of the expression
+            SymbolType to = ST->lookup($1->loc)->type;      // Get the type of the expression
             string f = "";
             if(!($1->fold)) {
                 f = ST->gentemp(INT);                       // Generate a new temporary variable
@@ -192,15 +192,15 @@ postfix_expression:
         | postfix_expression LEFT_PAREN RIGHT_PAREN
         {   
             // Corresponds to calling a function with the function name but without any arguments
-            symbolTable* funcTable = globalST.lookup($1->loc)->nestedTable;
+            SymbolTable* funcTable = globalST.lookup($1->loc)->nestedTable;
             emit($1->loc, "0", "", CALL);
         }
         | postfix_expression LEFT_PAREN argument_expression_list RIGHT_PAREN
         {   
             // Corresponds to calling a function with the function name and the appropriate number of arguments
-            symbolTable* funcTable = globalST.lookup($1->loc)->nestedTable;
+            SymbolTable* funcTable = globalST.lookup($1->loc)->nestedTable;
             vector<param*> parameters = *($3);                          // Get the list of parameters
-            vector<symbol*> paramsList = funcTable->symbols;
+            vector<Symbol*> paramsList = funcTable->symbols;
 
             for(int i = 0; i < (int)parameters.size(); i++) {
                 emit(parameters[i]->name, "", "", PARAM);               // Emit the parameters
@@ -212,7 +212,7 @@ postfix_expression:
             else {                                                      // If the function returns a value
                 string retVal = ST->gentemp(retType);
                 emit($1->loc, to_string(parameters.size()), retVal, CALL);
-                $$ = new expression();
+                $$ = new Expression();
                 $$->loc = retVal;
             }
         }
@@ -222,8 +222,8 @@ postfix_expression:
         {}
         | postfix_expression INCREMENT
         {   
-            $$ = new expression();                                          // Create new expression
-            symbolType t = ST->lookup($1->loc)->type;                       // Get the type of the expression and generate a temporary variable
+            $$ = new Expression();                                          // Create new expression
+            SymbolType t = ST->lookup($1->loc)->type;                       // Get the type of the expression and generate a temporary variable
             if(t.type == ARRAY) {
                 $$->loc = ST->gentemp(ST->lookup($1->loc)->type.nextType);
                 emit($$->loc, $1->loc, *($1->folder), ARR_IDX_ARG);
@@ -240,9 +240,9 @@ postfix_expression:
         }
         | postfix_expression DECREMENT
         {
-            $$ = new expression();                                          // Create new expression
+            $$ = new Expression();                                          // Create new expression
             $$->loc = ST->gentemp(ST->lookup($1->loc)->type.type);          // Generate a new temporary variable
-            symbolType t = ST->lookup($1->loc)->type;
+            SymbolType t = ST->lookup($1->loc)->type;
             if(t.type == ARRAY) {
                 $$->loc = ST->gentemp(ST->lookup($1->loc)->type.nextType);
                 string temp = ST->gentemp(t.nextType);
@@ -287,8 +287,8 @@ unary_expression:
         {}
         | INCREMENT unary_expression
         {
-            $$ = new expression();
-            symbolType type = ST->lookup($2->loc)->type;
+            $$ = new Expression();
+            SymbolType type = ST->lookup($2->loc)->type;
             if(type.type == ARRAY) {
                 string t = ST->gentemp(type.nextType);
                 emit(t, $2->loc, *($2->folder), ARR_IDX_ARG);
@@ -305,8 +305,8 @@ unary_expression:
         }
         | DECREMENT unary_expression
         {
-            $$ = new expression();
-            symbolType type = ST->lookup($2->loc)->type;
+            $$ = new Expression();
+            SymbolType type = ST->lookup($2->loc)->type;
             if(type.type == ARRAY) {
                 string t = ST->gentemp(type.nextType);
                 emit(t, $2->loc, *($2->folder), ARR_IDX_ARG);
@@ -325,24 +325,24 @@ unary_expression:
             // Case of unary operator
             switch($1) {
                 case '&':   // Address
-                    $$ = new expression();
+                    $$ = new Expression();
                     $$->loc = ST->gentemp(POINTER);                 // Generate temporary of the same base type
                     emit($$->loc, $2->loc, "", REFERENCE);          // Emit the quad
                     break;
                 case '*':   // De-referencing
-                    $$ = new expression();
+                    $$ = new Expression();
                     $$->loc = ST->gentemp(INT);                     // Generate temporary of the same base type
                     $$->fold = 1;
                     $$->folder = new string($2->loc);
                     emit($$->loc, $2->loc, "", DEREFERENCE);        // Emit the quad
                     break;
                 case '-':   // Unary minus
-                    $$ = new expression();
+                    $$ = new Expression();
                     $$->loc = ST->gentemp();                        // Generate temporary of the same base type
                     emit($$->loc, $2->loc, "", U_MINUS);            // Emit the quad
                     break;
                 case '!':   // Logical not 
-                    $$ = new expression();
+                    $$ = new Expression();
                     $$->loc = ST->gentemp(INT);                     // Generate temporary of the same base type
                     int temp = nextinstr + 2;
                     emit(to_string(temp), $2->loc, "0", GOTO_EQ);   // Emit the quads
@@ -398,8 +398,8 @@ cast_expression:
 multiplicative_expression: 
         cast_expression
         {
-            $$ = new expression();                                  // Generate new expression
-            symbolType tp = ST->lookup($1->loc)->type;
+            $$ = new Expression();                                  // Generate new expression
+            SymbolType tp = ST->lookup($1->loc)->type;
             if(tp.type == ARRAY) {                                  // If the type is an array
                 string t = ST->gentemp(tp.nextType);                // Generate a temporary
                 if($1->folder != NULL) {
@@ -417,9 +417,9 @@ multiplicative_expression:
         | multiplicative_expression MULTIPLY cast_expression
         {   
             // Indicates multiplication
-            $$ = new expression();
-            symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            $$ = new Expression();
+            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
                 string t = ST->gentemp(two->type.nextType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
@@ -441,9 +441,9 @@ multiplicative_expression:
         | multiplicative_expression DIVIDE cast_expression
         {
             // Indicates division
-            $$ = new expression();
-            symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            $$ = new Expression();
+            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
                 string t = ST->gentemp(two->type.nextType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
@@ -465,9 +465,9 @@ multiplicative_expression:
         | multiplicative_expression MODULO cast_expression
         {
             // Indicates modulo
-            $$ = new expression();
-            symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            $$ = new Expression();
+            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
                 string t = ST->gentemp(two->type.nextType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
@@ -494,9 +494,9 @@ additive_expression:
         | additive_expression ADD_ multiplicative_expression
         {   
             // Indicates addition
-            $$ = new expression();
-            symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            $$ = new Expression();
+            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
                 string t = ST->gentemp(two->type.nextType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
@@ -518,9 +518,9 @@ additive_expression:
         | additive_expression SUBTRACT multiplicative_expression
         {
             // Indicates subtraction
-            $$ = new expression();
-            symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            $$ = new Expression();
+            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
                 string t = ST->gentemp(two->type.nextType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
@@ -547,9 +547,9 @@ shift_expression:
         | shift_expression LEFT_SHIFT additive_expression
         {
             // Indicates left shift
-            $$ = new expression();
-            symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            $$ = new Expression();
+            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
                 string t = ST->gentemp(two->type.nextType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
@@ -568,9 +568,9 @@ shift_expression:
         | shift_expression RIGHT_SHIFT additive_expression
         {
             // Indicates right shift
-            $$ = new expression();
-            symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            $$ = new Expression();
+            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
                 string t = ST->gentemp(two->type.nextType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
@@ -593,9 +593,9 @@ relational_expression:
         {}
         | relational_expression LESS_THAN shift_expression
         {
-            $$ = new expression();
-            symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            $$ = new Expression();
+            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
                 string t = ST->gentemp(two->type.nextType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
@@ -608,7 +608,7 @@ relational_expression:
                 $1->loc = t;
                 $1->type = one->type.nextType;
             }
-            $$ = new expression();
+            $$ = new Expression();
             $$->loc = ST->gentemp();
             $$->type = BOOL;                                    // Assign the result of the relational expression to a boolean
             emit($$->loc, "1", "", ASSIGN);
@@ -620,9 +620,9 @@ relational_expression:
         }
         | relational_expression GREATER_THAN shift_expression
         {
-            $$ = new expression();
-            symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            $$ = new Expression();
+            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
                 string t = ST->gentemp(two->type.nextType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
@@ -635,7 +635,7 @@ relational_expression:
                 $1->loc = t;
                 $1->type = one->type.nextType;
             }
-            $$ = new expression();
+            $$ = new Expression();
             $$->loc = ST->gentemp();
             $$->type = BOOL;                                    // Assign the result of the relational expression to a boolean
             emit($$->loc, "1", "", ASSIGN);
@@ -647,9 +647,9 @@ relational_expression:
         }
         | relational_expression LESS_THAN_EQUALS shift_expression
         {
-            $$ = new expression();
-            symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            $$ = new Expression();
+            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
                 string t = ST->gentemp(two->type.nextType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
@@ -662,7 +662,7 @@ relational_expression:
                 $1->loc = t;
                 $1->type = one->type.nextType;
             }
-            $$ = new expression();
+            $$ = new Expression();
             $$->loc = ST->gentemp();
             $$->type = BOOL;                                    // Assign the result of the relational expression to a boolean
             emit($$->loc, "1", "", ASSIGN);
@@ -674,9 +674,9 @@ relational_expression:
         }
         | relational_expression GREATER_THAN_EQUALS shift_expression
         {
-            $$ = new expression();
-            symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            $$ = new Expression();
+            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
                 string t = ST->gentemp(two->type.nextType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
@@ -689,7 +689,7 @@ relational_expression:
                 $1->loc = t;
                 $1->type = one->type.nextType;
             }
-            $$ = new expression();
+            $$ = new Expression();
             $$->loc = ST->gentemp();
             $$->type = BOOL;                                    // Assign the result of the relational expression to a boolean
             emit($$->loc, "1", "", ASSIGN);
@@ -704,14 +704,14 @@ relational_expression:
 equality_expression: 
         relational_expression
         {
-            $$ = new expression();
+            $$ = new Expression();
             $$ = $1;                // Simple assignment
         }
         | equality_expression EQUALS relational_expression
         {
-            $$ = new expression();
-            symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            $$ = new Expression();
+            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
                 string t = ST->gentemp(two->type.nextType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
@@ -724,7 +724,7 @@ equality_expression:
                 $1->loc = t;
                 $1->type = one->type.nextType;
             }
-            $$ = new expression();
+            $$ = new Expression();
             $$->loc = ST->gentemp();
             $$->type = BOOL;                                    // Assign the result of the relational expression to a boolean
             emit($$->loc, "1", "", ASSIGN);
@@ -736,9 +736,9 @@ equality_expression:
         }
         | equality_expression NOT_EQUALS relational_expression
         {
-            $$ = new expression();
-            symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            $$ = new Expression();
+            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
                 string t = ST->gentemp(two->type.nextType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
@@ -751,7 +751,7 @@ equality_expression:
                 $1->loc = t;
                 $1->type = one->type.nextType;
             }
-            $$ = new expression();
+            $$ = new Expression();
             $$->loc = ST->gentemp();
             $$->type = BOOL;                                    // Assign the result of the relational expression to a boolean
             emit($$->loc, "1", "", ASSIGN);
@@ -768,9 +768,9 @@ and_expression:
         {}
         | and_expression BITWISE_AND equality_expression
         {
-            $$ = new expression();
-            symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            $$ = new Expression();
+            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
                 string t = ST->gentemp(two->type.nextType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
@@ -783,7 +783,7 @@ and_expression:
                 $1->loc = t;
                 $1->type = one->type.nextType;
             }
-            $$ = new expression();
+            $$ = new Expression();
             $$->loc = ST->gentemp();                            // Create a temporary variable to store the result
             emit($$->loc, $1->loc, $3->loc, BW_AND);            // Emit the quad
         }
@@ -796,9 +796,9 @@ exclusive_or_expression:
         }
         | exclusive_or_expression BITWISE_XOR and_expression
         {
-            $$ = new expression();
-            symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            $$ = new Expression();
+            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
                 string t = ST->gentemp(two->type.nextType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
@@ -811,7 +811,7 @@ exclusive_or_expression:
                 $1->loc = t;
                 $1->type = one->type.nextType;
             }
-            $$ = new expression();
+            $$ = new Expression();
             $$->loc = ST->gentemp();                            // Create a temporary variable to store the result
             emit($$->loc, $1->loc, $3->loc, BW_XOR);            // Emit the quad
         }
@@ -820,14 +820,14 @@ exclusive_or_expression:
 inclusive_or_expression: 
         exclusive_or_expression
         {
-            $$ = new expression();
+            $$ = new Expression();
             $$ = $1;                // Simple assignment
         }
         | inclusive_or_expression BITWISE_OR exclusive_or_expression
         {
-            $$ = new expression();
-            symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            $$ = new Expression();
+            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
                 string t = ST->gentemp(two->type.nextType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
@@ -840,7 +840,7 @@ inclusive_or_expression:
                 $1->loc = t;
                 $1->type = one->type.nextType;
             }
-            $$ = new expression();
+            $$ = new Expression();
             $$->loc = ST->gentemp();                            // Create a temporary variable to store the result
             emit($$->loc, $1->loc, $3->loc, BW_OR);             // Emit the quad
         }
@@ -883,7 +883,7 @@ conditional_expression:
             /*
                 Note the augmented grammar with the non-terminals M and N
             */
-            symbol* one = ST->lookup($5->loc);
+            Symbol* one = ST->lookup($5->loc);
             $$->loc = ST->gentemp(one->type.type);      // Create a temporary for the expression
             $$->type = one->type.type;
             emit($$->loc, $9->loc, "", ASSIGN);         // Assign the conditional expression
@@ -904,7 +904,7 @@ conditional_expression:
 M: %empty
         {   
             // Stores the next instruction value, and helps in backpatching
-            $$ = new expression();
+            $$ = new Expression();
             $$->instr = nextinstr;
         }
         ;
@@ -912,7 +912,7 @@ M: %empty
 N: %empty
         {
             // Helps in control flow
-            $$ = new expression();
+            $$ = new Expression();
             $$->nextlist = makelist(nextinstr);
             emit("", "", "", GOTO);
         }
@@ -923,8 +923,8 @@ assignment_expression:
         {}
         | unary_expression assignment_operator assignment_expression
         {
-            symbol* sym1 = ST->lookup($1->loc);         // Get the first operand from the symbol table
-            symbol* sym2 = ST->lookup($3->loc);         // Get the second operand from the symbol table
+            Symbol* sym1 = ST->lookup($1->loc);         // Get the first operand from the symbol table
+            Symbol* sym2 = ST->lookup($3->loc);         // Get the second operand from the symbol table
             if($1->fold == 0) {
                 if(sym1->type.type != ARRAY)
                     emit($1->loc, $3->loc, "", ASSIGN);
@@ -981,25 +981,25 @@ declaration:
             int currSize = -1;
             // Assign correct size for the data type
             if(currType == INT)
-                currSize = __INTEGER_SIZE;
+                currSize = _SIZE_INT;
             else if(currType == CHAR)
-                currSize = __CHARACTER_SIZE;
+                currSize = _SIZE_CHAR;
             else if(currType == FLOAT)
-                currSize = __FLOAT_SIZE;
+                currSize = _SIZE_FLOAT;
             vector<declaration*> decs = *($2);
             for(vector<declaration*>::iterator it = decs.begin(); it != decs.end(); it++) {
                 declaration* currDec = *it;
                 if(currDec->type == FUNCTION) {
                     ST = &globalST;
                     emit(currDec->name, "", "", FUNC_END);
-                    symbol* one = ST->lookup(currDec->name);        // Create an entry for the function
-                    symbol* two = one->nestedTable->lookup("RETVAL", currType, currDec->pointers);
+                    Symbol* one = ST->lookup(currDec->name);        // Create an entry for the function
+                    Symbol* two = one->nestedTable->lookup("RETVAL", currType, currDec->pointers);
                     one->size = 0;
                     one->initVal = NULL;
                     continue;
                 }
 
-                symbol* three = ST->lookup(currDec->name, currType);        // Create an entry for the variable in the symbol table
+                Symbol* three = ST->lookup(currDec->name, currType);        // Create an entry for the variable in the symbol table
                 three->nestedTable = NULL;
                 if(currDec->li == vector<int>() && currDec->pointers == 0) {
                     three->type.type = currType;
@@ -1028,8 +1028,8 @@ declaration:
                     three->type.type = POINTER;
                     three->type.nextType = currType;
                     three->type.pointers = currDec->pointers;
-                    ST->offset += (__POINTER_SIZE - currSize);
-                    three->size = __POINTER_SIZE;
+                    ST->offset += (_SIZE_POINTER - currSize);
+                    three->size = _SIZE_POINTER;
                 }
             }
         }
@@ -1233,8 +1233,8 @@ direct_declarator:
         {
             $$ = $1;
             $$->type = FUNCTION;    // Function type
-            symbol* funcData = ST->lookup($$->name, $$->type);
-            symbolTable* funcTable = new symbolTable();
+            Symbol* funcData = ST->lookup($$->name, $$->type);
+            SymbolTable* funcTable = new SymbolTable();
             funcData->nestedTable = funcTable;
             vector<param*> paramList = *($3);   // Get the parameter list
             for(int i = 0; i < (int)paramList.size(); i++) {
@@ -1430,7 +1430,7 @@ block_item_list:
             /*
                 This production rule has been augmented with the non-terminal M
             */
-            $$ = new expression();
+            $$ = new Expression();
             backpatch($1->nextlist, $2->instr);    // After $1, move to block_item via $2
             $$->nextlist = $3->nextlist;
         }
@@ -1439,7 +1439,7 @@ block_item_list:
 block_item: 
         declaration
         {
-            $$ = new expression();   // Create new expression
+            $$ = new Expression();   // Create new expression
         }
         | statement
         ;
@@ -1449,7 +1449,7 @@ expression_statement:
         {}
         | SEMICOLON
         {
-            $$ = new expression();  // Create new expression
+            $$ = new Expression();  // Create new expression
         }
         ;
 
@@ -1462,7 +1462,7 @@ selection_statement:
             backpatch($4->nextlist, nextinstr);         // nextlist of N now has nextinstr
             convertIntToBool($3);                       // Convert expression to bool
             backpatch($3->truelist, $6->instr);         // Backpatching - if expression is true, go to M
-            $$ = new expression();                      // Create new expression
+            $$ = new Expression();                      // Create new expression
             // Merge falselist of expression, nextlist of statement and nextlist of the last N
             $7->nextlist = merge($8->nextlist, $7->nextlist);
             $$->nextlist = merge($3->falselist, $7->nextlist);
@@ -1476,7 +1476,7 @@ selection_statement:
             convertIntToBool($3);                       // Convert expression to bool
             backpatch($3->truelist, $6->instr);         // Backpatching - if expression is true, go to first M, else go to second M
             backpatch($3->falselist, $10->instr);
-            $$ = new expression();                      // Create new expression
+            $$ = new Expression();                      // Create new expression
             // Merge nextlist of statement, nextlist of N and nextlist of the last statement
             $$->nextlist = merge($7->nextlist, $8->nextlist);
             $$->nextlist = merge($$->nextlist, $11->nextlist);
@@ -1492,7 +1492,7 @@ iteration_statement:
             /*
                 This production rule has been augmented with non-terminals like M and N to handle the control flow and backpatching
             */
-            $$ = new expression();                   // Create a new expression
+            $$ = new Expression();                   // Create a new expression
             emit("", "", "", GOTO);
             backpatch(makelist(nextinstr - 1), $2->instr);
             backpatch($5->nextlist, nextinstr);
@@ -1506,7 +1506,7 @@ iteration_statement:
             /*
                 This production rule has been augmented with non-terminals like M and N to handle the control flow and backpatching
             */
-            $$ = new expression();                  // Create a new expression  
+            $$ = new Expression();                  // Create a new expression  
             backpatch($8->nextlist, nextinstr);     // Backpatching 
             convertIntToBool($7);                   // Convert expression to bool
             backpatch($7->truelist, $2->instr);     // Backpatching - if expression is true, go to M
@@ -1518,7 +1518,7 @@ iteration_statement:
             /*
                 This production rule has been augmented with non-terminals like M and N to handle the control flow and backpatching
             */
-            $$ = new expression();                   // Create a new expression
+            $$ = new Expression();                   // Create a new expression
             emit("", "", "", GOTO);
             $12->nextlist = merge($12->nextlist, makelist(nextinstr - 1));
             backpatch($12->nextlist, $7->instr);    // Backpatching - go to the beginning of the loop
@@ -1542,14 +1542,14 @@ jump_statement:
             if(ST->lookup("RETVAL")->type.type == VOID) {
                 emit("", "", "", RETURN);           // Emit the quad when return type is void
             }
-            $$ = new expression();
+            $$ = new Expression();
         }
         | RETURN_ expression SEMICOLON
         {
             if(ST->lookup("RETVAL")->type.type == ST->lookup($2->loc)->type.type) {
                 emit($2->loc, "", "", RETURN);      // Emit the quad when return type is not void
             }
-            $$ = new expression();
+            $$ = new Expression();
         }
         ;
 
@@ -1583,15 +1583,15 @@ function_prototype:
             DataType currType = $1;
             int currSize = -1;
             if(currType == CHAR)
-                currSize = __CHARACTER_SIZE;
+                currSize = _SIZE_CHAR;
             if(currType == INT)
-                currSize = __INTEGER_SIZE;
+                currSize = _SIZE_INT;
             if(currType == FLOAT)
-                currSize = __FLOAT_SIZE;
+                currSize = _SIZE_FLOAT;
             declaration* currDec = $2;
-            symbol* sym = globalST.lookup(currDec->name);
+            Symbol* sym = globalST.lookup(currDec->name);
             if(currDec->type == FUNCTION) {
-                symbol* retval = sym->nestedTable->lookup("RETVAL", currType, currDec->pointers);   // Create entry for return value
+                Symbol* retval = sym->nestedTable->lookup("RETVAL", currType, currDec->pointers);   // Create entry for return value
                 sym->size = 0;
                 sym->initVal = NULL;
             }
