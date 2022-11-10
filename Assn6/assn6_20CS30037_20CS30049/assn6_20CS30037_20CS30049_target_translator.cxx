@@ -15,55 +15,57 @@ map<int, string> labels;
 stack<pair<string, int>> parameters;
 int labelCount = 0;
 string funcRunning = "";
-string asmFileName;
+string filename;
 
 // Prints the global information to the assembly file
-void printGlobal(ofstream &sfile)
+void printGlobal(ofstream &asm_file)
 {
-    for (vector<Symbol *>::iterator it = SymTbl_Global.symbols.begin(); it != SymTbl_Global.symbols.end(); it++)
+    for (auto it = SymTbl_Global.symbols.begin(); it != SymTbl_Global.symbols.end(); it++)
     {
         Symbol *sym = *it;
         if (sym->type.type == CHAR && sym->name[0] != 't')
         {
             if (sym->initVal != NULL)
             {
-                sfile << "\t.globl\t" << sym->name << endl;
-                sfile << "\t.data" << endl;
-                sfile << "\t.type\t" << sym->name << ", @object" << endl;
-                sfile << "\t.size\t" << sym->name << ", 1" << endl;
-                sfile << sym->name << ":" << endl;
-                sfile << "\t.byte\t" << sym->initVal->c << endl;
+                asm_file << "\t.globl\t" << sym->name << endl;
+                asm_file << "\t.data" << endl;
+                asm_file << "\t.type\t" << sym->name << ", @object" << endl;
+                asm_file << "\t.size\t" << sym->name << ", 1" << endl;
+                asm_file << sym->name << ":" << endl;
+                asm_file << "\t.byte\t" << sym->initVal->c << endl;
             }
             else
-                sfile << "\t.comm\t" << sym->name << ",1,1" << endl;
+                asm_file << "\t.comm\t" << sym->name << ",1,1" << endl;
         }
         else if (sym->type.type == INT && sym->name[0] != 't')
         {
             if (sym->initVal != NULL)
             {
-                sfile << "\t.globl\t" << sym->name << endl;
-                sfile << "\t.data" << endl;
-                sfile << "\t.align\t4" << endl;
-                sfile << "\t.type\t" << sym->name << ", @object" << endl;
-                sfile << "\t.size\t" << sym->name << ", 4" << endl;
-                sfile << sym->name << ":" << endl;
-                sfile << "\t.long\t" << sym->initVal->i << endl;
+                asm_file << "\t.globl\t" << sym->name << endl;
+                asm_file << "\t.data" << endl;
+                asm_file << "\t.align\t4" << endl;
+                asm_file << "\t.type\t" << sym->name << ", @object" << endl;
+                asm_file << "\t.size\t" << sym->name << ", 4" << endl;
+                asm_file << sym->name << ":" << endl;
+                asm_file << "\t.long\t" << sym->initVal->i << endl;
             }
             else
-                sfile << "\t.comm\t" << sym->name << ",4,4" << endl;
+                asm_file << "\t.comm\t" << sym->name << ",4,4" << endl;
         }
     }
 }
 
 // Prints all the strings used in the program to the assembly file
-void printStrings(ofstream &sfile)
+void printStrings(ofstream &asm_file)
 {
-    sfile << ".section\t.rodata" << endl;
+    
+    asm_file << ".section\t.rodata" << endl;
     int i = 0;
-    for (vector<string>::iterator it = stringConsts.begin(); it != stringConsts.end(); it++)
+
+    for (auto it = stringConsts.begin(); it != stringConsts.end(); it++)
     {
-        sfile << ".LC" << i++ << ":" << endl;
-        sfile << "\t.string " << *it << endl;
+        asm_file << ".LC" << i++ << ":" << endl;
+        asm_file << "\t.string " << *it << endl;
     }
 }
 
@@ -71,7 +73,7 @@ void printStrings(ofstream &sfile)
 void setLabels()
 {
     int i = 0;
-    for (vector<Quad>::iterator it = QuadList.quads.begin(); it != QuadList.quads.end(); it++)
+    for (auto it = QuadList.quads.begin(); it != QuadList.quads.end(); it++)
     {
         if (it->op == GOTO || (it->op >= GOTO_EQ && it->op <= IF_FALSE_GOTO))
         {
@@ -88,23 +90,23 @@ void setLabels()
 
 // Generates the function prologue to be printed before each function
 // Generic tasks like allocating space for variables on the stack are performed here
-void generatePrologue(int memBind, ofstream &sfile)
+void generatePrologue(int memBind, ofstream &asm_file)
 {
     int width = 16;
-    sfile << endl
+    asm_file << endl
           << "\t.text" << endl;
-    sfile << "\t.globl\t" << funcRunning << endl;
-    sfile << "\t.type\t" << funcRunning << ", @function" << endl;
-    sfile << funcRunning << ":" << endl;
-    sfile << "\tpushq\t"
+    asm_file << "\t.globl\t" << funcRunning << endl;
+    asm_file << "\t.type\t" << funcRunning << ", @function" << endl;
+    asm_file << funcRunning << ":" << endl;
+    asm_file << "\tpushq\t"
           << "%rbp" << endl;
-    sfile << "\tmovq\t"
+    asm_file << "\tmovq\t"
           << "%rsp, %rbp" << endl;
-    sfile << "\tsubq\t$" << (memBind / width + 1) * width << ", %rsp" << endl;
+    asm_file << "\tsubq\t$" << (memBind / width + 1) * width << ", %rsp" << endl;
 }
 
 // Generates assembly code for a given three address quad
-void quadCode(Quad q, ofstream &sfile)
+void quadCode(Quad q, ofstream &asm_file)
 {
     string strLabel = q.result;
     bool hasStrLabel = (q.result[0] == '.' && q.result[1] == 'L' && q.result[2] == 'C');
@@ -167,216 +169,217 @@ void quadCode(Quad q, ofstream &sfile)
             {
                 if (q.arg1[0] < '0' || q.arg1[0] > '9')
                 {
-                    sfile << "\tmovl\t" << toPrint1 << ", %eax" << endl;
-                    sfile << "\tmovl\t%eax, " << toPrintRes << endl;
+                    asm_file << "\tmovl\t" << toPrint1 << ", %eax" << endl;
+                    asm_file << "\tmovl\t%eax, " << toPrintRes << endl;
                 }
                 else
-                    sfile << "\tmovl\t$" << q.arg1 << ", " << toPrintRes << endl;
+                    asm_file << "\tmovl\t$" << q.arg1 << ", " << toPrintRes << endl;
             }
             else
             {
-                sfile << "\tmovq\t" << toPrint1 << ", %rax" << endl;
-                sfile << "\tmovq\t%rax, " << toPrintRes << endl;
+                asm_file << "\tmovq\t" << toPrint1 << ", %rax" << endl;
+                asm_file << "\tmovq\t%rax, " << toPrintRes << endl;
             }
         }
         else
         {
             int temp = q.arg1[0];
-            sfile << "\tmovb\t$" << temp << ", " << toPrintRes << endl;
+            asm_file << "\tmovb\t$" << temp << ", " << toPrintRes << endl;
         }
     }
     else if (q.op == U_MINUS)
     {
-        sfile << "\tmovl\t" << toPrint1 << ", %eax" << endl;
-        sfile << "\tnegl\t%eax" << endl;
-        sfile << "\tmovl\t%eax, " << toPrintRes << endl;
+        asm_file << "\tmovl\t" << toPrint1 << ", %eax" << endl;
+        asm_file << "\tnegl\t%eax" << endl;
+        asm_file << "\tmovl\t%eax, " << toPrintRes << endl;
     }
     else if (q.op == ADD)
     {
         if (q.arg1[0] > '0' && q.arg1[0] <= '9')
-            sfile << "\tmovl\t$" << q.arg1 << ", %eax" << endl;
+            asm_file << "\tmovl\t$" << q.arg1 << ", %eax" << endl;
         else
-            sfile << "\tmovl\t" << toPrint1 << ", %eax" << endl;
+            asm_file << "\tmovl\t" << toPrint1 << ", %eax" << endl;
         if (q.arg2[0] > '0' && q.arg2[0] <= '9')
-            sfile << "\tmovl\t$" << q.arg2 << ", %edx" << endl;
+            asm_file << "\tmovl\t$" << q.arg2 << ", %edx" << endl;
         else
-            sfile << "\tmovl\t" << toPrint2 << ", %edx" << endl;
-        sfile << "\taddl\t%edx, %eax" << endl;
-        sfile << "\tmovl\t%eax, " << toPrintRes << endl;
+            asm_file << "\tmovl\t" << toPrint2 << ", %edx" << endl;
+        asm_file << "\taddl\t%edx, %eax" << endl;
+        asm_file << "\tmovl\t%eax, " << toPrintRes << endl;
     }
     else if (q.op == SUB)
     {
         if (q.arg1[0] > '0' && q.arg1[0] <= '9')
-            sfile << "\tmovl\t$" << q.arg1 << ", %edx" << endl;
+            asm_file << "\tmovl\t$" << q.arg1 << ", %edx" << endl;
         else
-            sfile << "\tmovl\t" << toPrint1 << ", %edx" << endl;
+            asm_file << "\tmovl\t" << toPrint1 << ", %edx" << endl;
         if (q.arg2[0] > '0' && q.arg2[0] <= '9')
-            sfile << "\tmovl\t$" << q.arg2 << ", %eax" << endl;
+            asm_file << "\tmovl\t$" << q.arg2 << ", %eax" << endl;
         else
-            sfile << "\tmovl\t" << toPrint2 << ", %eax" << endl;
-        sfile << "\tsubl\t%eax, %edx" << endl;
-        sfile << "\tmovl\t%edx, %eax" << endl;
-        sfile << "\tmovl\t%eax, " << toPrintRes << endl;
+            asm_file << "\tmovl\t" << toPrint2 << ", %eax" << endl;
+        asm_file << "\tsubl\t%eax, %edx" << endl;
+        asm_file << "\tmovl\t%edx, %eax" << endl;
+        asm_file << "\tmovl\t%eax, " << toPrintRes << endl;
     }
     else if (q.op == MULT)
     {
         if (q.arg1[0] > '0' && q.arg1[0] <= '9')
-            sfile << "\tmovl\t$" << q.arg1 << ", %eax" << endl;
+            asm_file << "\tmovl\t$" << q.arg1 << ", %eax" << endl;
         else
-            sfile << "\tmovl\t" << toPrint1 << ", %eax" << endl;
-        sfile << "\timull\t";
+            asm_file << "\tmovl\t" << toPrint1 << ", %eax" << endl;
+        asm_file << "\timull\t";
         if (q.arg2[0] > '0' && q.arg2[0] <= '9')
-            sfile << "$" << q.arg2 << ", %eax" << endl;
+            asm_file << "$" << q.arg2 << ", %eax" << endl;
         else
-            sfile << toPrint2 << ", %eax" << endl;
-        sfile << "\tmovl\t%eax, " << toPrintRes << endl;
+            asm_file << toPrint2 << ", %eax" << endl;
+        asm_file << "\tmovl\t%eax, " << toPrintRes << endl;
     }
     else if (q.op == DIV)
     {
-        sfile << "\tmovl\t" << toPrint1 << ", %eax" << endl;
-        sfile << "\tcltd\n\tidivl\t" << toPrint2 << endl;
-        sfile << "\tmovl\t%eax, " << toPrintRes << endl;
+        asm_file << "\tmovl\t" << toPrint1 << ", %eax" << endl;
+        asm_file << "\tcltd\n\tidivl\t" << toPrint2 << endl;
+        asm_file << "\tmovl\t%eax, " << toPrintRes << endl;
     }
     else if (q.op == MOD)
     {
-        sfile << "\tmovl\t" << toPrint1 << ", %eax" << endl;
-        sfile << "\tcltd\n\tidivl\t" << toPrint2 << endl;
-        sfile << "\tmovl\t%edx, " << toPrintRes << endl;
+        asm_file << "\tmovl\t" << toPrint1 << ", %eax" << endl;
+        asm_file << "\tcltd\n\tidivl\t" << toPrint2 << endl;
+        asm_file << "\tmovl\t%edx, " << toPrintRes << endl;
     }
     else if (q.op == GOTO)
-        sfile << "\tjmp\t" << q.result << endl;
+        asm_file << "\tjmp\t" << q.result << endl;
     else if (q.op == GOTO_LT)
     {
-        sfile << "\tmovl\t" << toPrint1 << ", %eax" << endl;
-        sfile << "\tcmpl\t" << toPrint2 << ", %eax" << endl;
-        sfile << "\tjge\t.L" << labelCount << endl;
-        sfile << "\tjmp\t" << q.result << endl;
-        sfile << ".L" << labelCount++ << ":" << endl;
+        asm_file << "\tmovl\t" << toPrint1 << ", %eax" << endl;
+        asm_file << "\tcmpl\t" << toPrint2 << ", %eax" << endl;
+        asm_file << "\tjge\t.L" << labelCount << endl;
+        asm_file << "\tjmp\t" << q.result << endl;
+        asm_file << ".L" << labelCount++ << ":" << endl;
     }
     else if (q.op == GOTO_GT)
     {
-        sfile << "\tmovl\t" << toPrint1 << ", %eax" << endl;
-        sfile << "\tcmpl\t" << toPrint2 << ", %eax" << endl;
-        sfile << "\tjle\t.L" << labelCount << endl;
-        sfile << "\tjmp\t" << q.result << endl;
-        sfile << ".L" << labelCount++ << ":" << endl;
+        asm_file << "\tmovl\t" << toPrint1 << ", %eax" << endl;
+        asm_file << "\tcmpl\t" << toPrint2 << ", %eax" << endl;
+        asm_file << "\tjle\t.L" << labelCount << endl;
+        asm_file << "\tjmp\t" << q.result << endl;
+        asm_file << ".L" << labelCount++ << ":" << endl;
     }
     else if (q.op == GOTO_GTE)
     {
-        sfile << "\tmovl\t" << toPrint1 << ", %eax" << endl;
-        sfile << "\tcmpl\t" << toPrint2 << ", %eax" << endl;
-        sfile << "\tjl\t.L" << labelCount << endl;
-        sfile << "\tjmp\t" << q.result << endl;
-        sfile << ".L" << labelCount++ << ":" << endl;
+        asm_file << "\tmovl\t" << toPrint1 << ", %eax" << endl;
+        asm_file << "\tcmpl\t" << toPrint2 << ", %eax" << endl;
+        asm_file << "\tjl\t.L" << labelCount << endl;
+        asm_file << "\tjmp\t" << q.result << endl;
+        asm_file << ".L" << labelCount++ << ":" << endl;
     }
     else if (q.op == GOTO_LTE)
     {
-        sfile << "\tmovl\t" << toPrint1 << ", %eax" << endl;
-        sfile << "\tcmpl\t" << toPrint2 << ", %eax" << endl;
-        sfile << "\tjg\t.L" << labelCount << endl;
-        sfile << "\tjmp\t" << q.result << endl;
-        sfile << ".L" << labelCount++ << ":" << endl;
+        asm_file << "\tmovl\t" << toPrint1 << ", %eax" << endl;
+        asm_file << "\tcmpl\t" << toPrint2 << ", %eax" << endl;
+        asm_file << "\tjg\t.L" << labelCount << endl;
+        asm_file << "\tjmp\t" << q.result << endl;
+        asm_file << ".L" << labelCount++ << ":" << endl;
     }
     else if (q.op == GOTO_GTE)
     {
-        sfile << "\tmovl\t" << toPrint1 << ", %eax" << endl;
-        sfile << "\tcmpl\t" << toPrint2 << ", %eax" << endl;
-        sfile << "\tjl\t.L" << labelCount << endl;
-        sfile << "\tjmp\t" << q.result << endl;
-        sfile << ".L" << labelCount++ << ":" << endl;
+        asm_file << "\tmovl\t" << toPrint1 << ", %eax" << endl;
+        asm_file << "\tcmpl\t" << toPrint2 << ", %eax" << endl;
+        asm_file << "\tjl\t.L" << labelCount << endl;
+        asm_file << "\tjmp\t" << q.result << endl;
+        asm_file << ".L" << labelCount++ << ":" << endl;
     }
     else if (q.op == GOTO_EQ)
     {
-        sfile << "\tmovl\t" << toPrint1 << ", %eax" << endl;
+        asm_file << "\tmovl\t" << toPrint1 << ", %eax" << endl;
         if (q.arg2[0] >= '0' && q.arg2[0] <= '9')
-            sfile << "\tcmpl\t$" << q.arg2 << ", %eax" << endl;
+            asm_file << "\tcmpl\t$" << q.arg2 << ", %eax" << endl;
         else
-            sfile << "\tcmpl\t" << toPrint2 << ", %eax" << endl;
-        sfile << "\tjne\t.L" << labelCount << endl;
-        sfile << "\tjmp\t" << q.result << endl;
-        sfile << ".L" << labelCount++ << ":" << endl;
+            asm_file << "\tcmpl\t" << toPrint2 << ", %eax" << endl;
+        asm_file << "\tjne\t.L" << labelCount << endl;
+        asm_file << "\tjmp\t" << q.result << endl;
+        asm_file << ".L" << labelCount++ << ":" << endl;
     }
     else if (q.op == GOTO_NEQ)
     {
-        sfile << "\tmovl\t" << toPrint1 << ", %eax" << endl;
-        sfile << "\tcmpl\t" << toPrint2 << ", %eax" << endl;
-        sfile << "\tje\t.L" << labelCount << endl;
-        sfile << "\tjmp\t" << q.result << endl;
-        sfile << ".L" << labelCount++ << ":" << endl;
+        asm_file << "\tmovl\t" << toPrint1 << ", %eax" << endl;
+        asm_file << "\tcmpl\t" << toPrint2 << ", %eax" << endl;
+        asm_file << "\tje\t.L" << labelCount << endl;
+        asm_file << "\tjmp\t" << q.result << endl;
+        asm_file << ".L" << labelCount++ << ":" << endl;
     }
     else if (q.op == IF_GOTO)
     {
-        sfile << "\tmovl\t" << toPrint1 << ", %eax" << endl;
-        sfile << "\tcmpl\t$0"
+        asm_file << "\tmovl\t" << toPrint1 << ", %eax" << endl;
+        asm_file << "\tcmpl\t$0"
               << ", %eax" << endl;
-        sfile << "\tje\t.L" << labelCount << endl;
-        sfile << "\tjmp\t" << q.result << endl;
-        sfile << ".L" << labelCount++ << ":" << endl;
+        asm_file << "\tje\t.L" << labelCount << endl;
+        asm_file << "\tjmp\t" << q.result << endl;
+        asm_file << ".L" << labelCount++ << ":" << endl;
     }
     else if (q.op == IF_FALSE_GOTO)
     {
-        sfile << "\tmovl\t" << toPrint1 << ", %eax" << endl;
-        sfile << "\tcmpl\t$0"
+        asm_file << "\tmovl\t" << toPrint1 << ", %eax" << endl;
+        asm_file << "\tcmpl\t$0"
               << ", %eax" << endl;
-        sfile << "\tjne\t.L" << labelCount << endl;
-        sfile << "\tjmp\t" << q.result << endl;
-        sfile << ".L" << labelCount++ << ":" << endl;
+        asm_file << "\tjne\t.L" << labelCount << endl;
+        asm_file << "\tjmp\t" << q.result << endl;
+        asm_file << ".L" << labelCount++ << ":" << endl;
     }
     else if (q.op == ARR_IDX_ARG)
     {
-        sfile << "\tmovl\t" << toPrint2 << ", %edx" << endl;
-        sfile << "cltq" << endl;
+        asm_file << "\tmovl\t" << toPrint2 << ", %edx" << endl;
+        asm_file << "cltq" << endl;
         if (off1 < 0)
         {
-            sfile << "\tmovl\t" << off1 << "(%rbp,%rdx,1), %eax" << endl;
-            sfile << "\tmovl\t%eax, " << toPrintRes << endl;
+            asm_file << "\tmovl\t" << off1 << "(%rbp,%rdx,1), %eax" << endl;
+            asm_file << "\tmovl\t%eax, " << toPrintRes << endl;
         }
         else
         {
-            sfile << "\tmovq\t" << off1 << "(%rbp), %rdi" << endl;
-            sfile << "\taddq\t%rdi, %rdx" << endl;
-            sfile << "\tmovq\t(%rdx) ,%rax" << endl;
-            sfile << "\tmovq\t%rax, " << toPrintRes << endl;
+            asm_file << "\tmovq\t" << off1 << "(%rbp), %rdi" << endl;
+            asm_file << "\taddq\t%rdi, %rdx" << endl;
+            asm_file << "\tmovq\t(%rdx) ,%rax" << endl;
+            asm_file << "\tmovq\t%rax, " << toPrintRes << endl;
         }
     }
     else if (q.op == ARR_IDX_RES)
     {
-        sfile << "\tmovl\t" << toPrint2 << ", %edx" << endl;
-        sfile << "\tmovl\t" << toPrint1 << ", %eax" << endl;
-        sfile << "cltq" << endl;
+        asm_file << "\tmovl\t" << toPrint2 << ", %edx" << endl;
+        asm_file << "\tmovl\t" << toPrint1 << ", %eax" << endl;
+        asm_file << "cltq" << endl;
+
         if (offRes > 0)
         {
-            sfile << "\tmovq\t" << offRes << "(%rbp), %rdi" << endl;
-            sfile << "\taddq\t%rdi, %rdx" << endl;
-            sfile << "\tmovl\t%eax, (%rdx)" << endl;
+            asm_file << "\tmovq\t" << offRes << "(%rbp), %rdi" << endl;
+            asm_file << "\taddq\t%rdi, %rdx" << endl;
+            asm_file << "\tmovl\t%eax, (%rdx)" << endl;
         }
         else
-            sfile << "\tmovl\t%eax, " << offRes << "(%rbp,%rdx,1)" << endl;
+            asm_file << "\tmovl\t%eax, " << offRes << "(%rbp,%rdx,1)" << endl;
     }
     else if (q.op == REFERENCE)
     {
         if (off1 < 0)
         {
-            sfile << "\tleaq\t" << toPrint1 << ", %rax" << endl;
-            sfile << "\tmovq\t%rax, " << toPrintRes << endl;
+            asm_file << "\tleaq\t" << toPrint1 << ", %rax" << endl;
+            asm_file << "\tmovq\t%rax, " << toPrintRes << endl;
         }
         else
         {
-            sfile << "\tmovq\t" << toPrint1 << ", %rax" << endl;
-            sfile << "\tmovq\t%rax, " << toPrintRes << endl;
+            asm_file << "\tmovq\t" << toPrint1 << ", %rax" << endl;
+            asm_file << "\tmovq\t%rax, " << toPrintRes << endl;
         }
     }
     else if (q.op == DEREFERENCE)
     {
-        sfile << "\tmovq\t" << toPrint1 << ", %rax" << endl;
-        sfile << "\tmovq\t(%rax), %rdx" << endl;
-        sfile << "\tmovq\t%rdx, " << toPrintRes << endl;
+        asm_file << "\tmovq\t" << toPrint1 << ", %rax" << endl;
+        asm_file << "\tmovq\t(%rax), %rdx" << endl;
+        asm_file << "\tmovq\t%rdx, " << toPrintRes << endl;
     }
     else if (q.op == L_DEREF)
     {
-        sfile << "\tmovq\t" << toPrintRes << ", %rdx" << endl;
-        sfile << "\tmovl\t" << toPrint1 << ", %eax" << endl;
-        sfile << "\tmovl\t%eax, (%rdx)" << endl;
+        asm_file << "\tmovq\t" << toPrintRes << ", %rdx" << endl;
+        asm_file << "\tmovl\t" << toPrint1 << ", %eax" << endl;
+        asm_file << "\tmovl\t%eax, (%rdx)" << endl;
     }
     else if (q.op == PARAM)
     {
@@ -432,102 +435,126 @@ void quadCode(Quad q, ofstream &sfile)
             for (int i = 0; i < numParams - 6; i++)
             {
                 string s = parameters.top().first;
-                sfile << s << "\tpushq\t%rax" << endl;
+                asm_file << s << "\tpushq\t%rax" << endl;
                 totalSize += parameters.top().second;
                 parameters.pop();
             }
-            sfile << parameters.top().first << "\tpushq\t%rax" << endl
+
+            asm_file << parameters.top().first << "\tpushq\t%rax" << endl
                   << "\tmovq\t%rax, %r9d" << endl;
             totalSize += parameters.top().second;
             parameters.pop();
-            sfile << parameters.top().first << "\tpushq\t%rax" << endl
+
+            asm_file << parameters.top().first << "\tpushq\t%rax" << endl
                   << "\tmovq\t%rax, %r8d" << endl;
             totalSize += parameters.top().second;
             parameters.pop();
-            sfile << parameters.top().first << "\tpushq\t%rax" << endl
+
+            asm_file << parameters.top().first << "\tpushq\t%rax" << endl
                   << "\tmovq\t%rax, %rcx" << endl;
             totalSize += parameters.top().second;
             parameters.pop();
-            sfile << parameters.top().first << "\tpushq\t%rax" << endl
+
+            asm_file << parameters.top().first << "\tpushq\t%rax" << endl
                   << "\tmovq\t%rax, %rdx" << endl;
             totalSize += parameters.top().second;
             parameters.pop();
-            sfile << parameters.top().first << "\tpushq\t%rax" << endl
+            
+            asm_file << parameters.top().first << "\tpushq\t%rax" << endl
                   << "\tmovq\t%rax, %rsi" << endl;
             totalSize += parameters.top().second;
             parameters.pop();
-            sfile << parameters.top().first << "\tpushq\t%rax" << endl
+
+            asm_file << parameters.top().first << "\tpushq\t%rax" << endl
                   << "\tmovq\t%rax, %rdi" << endl;
             totalSize += parameters.top().second;
             parameters.pop();
+
         }
         else
         {
             while (!parameters.empty())
             {
                 if (parameters.size() == 6)
+
                 {
-                    sfile << parameters.top().first << "\tpushq\t%rax" << endl
+                    asm_file << parameters.top().first << "\tpushq\t%rax" << endl
                           << "\tmovq\t%rax, %r9d" << endl;
                     totalSize += parameters.top().second;
                     parameters.pop();
                 }
+
                 else if (parameters.size() == 5)
+
                 {
-                    sfile << parameters.top().first << "\tpushq\t%rax" << endl
+                    asm_file << parameters.top().first << "\tpushq\t%rax" << endl
                           << "\tmovq\t%rax, %r8d" << endl;
                     totalSize += parameters.top().second;
                     parameters.pop();
                 }
+
                 else if (parameters.size() == 4)
+
                 {
-                    sfile << parameters.top().first << "\tpushq\t%rax" << endl
+                    asm_file << parameters.top().first << "\tpushq\t%rax" << endl
                           << "\tmovq\t%rax, %rcx" << endl;
                     totalSize += parameters.top().second;
                     parameters.pop();
                 }
+
                 else if (parameters.size() == 3)
+
                 {
-                    sfile << parameters.top().first << "\tpushq\t%rax" << endl
+                    asm_file << parameters.top().first << "\tpushq\t%rax" << endl
                           << "\tmovq\t%rax, %rdx" << endl;
                     totalSize += parameters.top().second;
                     parameters.pop();
                 }
+
                 else if (parameters.size() == 2)
+
                 {
-                    sfile << parameters.top().first << "\tpushq\t%rax" << endl
+                    asm_file << parameters.top().first << "\tpushq\t%rax" << endl
                           << "\tmovq\t%rax, %rsi" << endl;
                     totalSize += parameters.top().second;
                     parameters.pop();
                 }
+
                 else if (parameters.size() == 1)
+
                 {
-                    sfile << parameters.top().first << "\tpushq\t%rax" << endl
+                    asm_file << parameters.top().first << "\tpushq\t%rax" << endl
                           << "\tmovq\t%rax, %rdi" << endl;
                     totalSize += parameters.top().second;
                     parameters.pop();
                 }
             }
         }
-        sfile << "\tcall\t" << q.result << endl;
+
+        asm_file << "\tcall\t" << q.result << endl;
+
         if (q.arg2 != "")
-            sfile << "\tmovq\t%rax, " << toPrint2 << endl;
-        sfile << "\taddq\t$" << totalSize << ", %rsp" << endl;
+            asm_file << "\tmovq\t%rax, " << toPrint2 << endl;
+
+        asm_file << "\taddq\t$" << totalSize << ", %rsp" << endl;
     }
+
     else if (q.op == RETURN)
+    
     {
         if (q.result != "")
-            sfile << "\tmovq\t" << toPrintRes << ", %rax" << endl;
-        sfile << "\tleave" << endl;
-        sfile << "\tret" << endl;
+            asm_file << "\tmovq\t" << toPrintRes << ", %rax" << endl;
+
+        asm_file << "\tleave" << endl;
+        asm_file << "\tret" << endl;
     }
 }
 
 // Main function which calls all other relevant functions for generating the target assembly code
-void generateTargetCode(ofstream &sfile)
+void generateTargetCode(ofstream &asm_file)
 {
-    printGlobal(sfile);
-    printStrings(sfile);
+    printGlobal(asm_file);
+    printStrings(asm_file);
     SymbolTable *currFuncTable = NULL;
     Symbol *currFunc = NULL;
     setLabels();
@@ -535,9 +562,9 @@ void generateTargetCode(ofstream &sfile)
     for (int i = 0; i < (int)QuadList.quads.size(); i++)
     {
         // Print the quad as a comment in the assembly file
-        sfile << "# " << QuadList.quads[i].print() << endl;
+        asm_file << "# " << QuadList.quads[i].print() << endl;
         if (labels.count(i))
-            sfile << labels[i] << ":" << endl;
+            asm_file << labels[i] << ":" << endl;
 
         // Necessary tasks for a function
         if (QuadList.quads[i].op == FUNC_BEG)
@@ -582,7 +609,7 @@ void generateTargetCode(ofstream &sfile)
             else
                 memBind *= -1;
             funcRunning = QuadList.quads[i].result;
-            generatePrologue(memBind, sfile);
+            generatePrologue(memBind, asm_file);
         }
 
         // Function epilogue (while leaving a function)
@@ -590,24 +617,26 @@ void generateTargetCode(ofstream &sfile)
         {
             SymTbl = &SymTbl_Global;
             funcRunning = "";
-            sfile << "\tleave" << endl;
-            sfile << "\tret" << endl;
-            sfile << "\t.size\t" << QuadList.quads[i].result << ", .-" << QuadList.quads[i].result << endl;
+            asm_file << "\tleave" << endl;
+            asm_file << "\tret" << endl;
+            asm_file << "\t.size\t" << QuadList.quads[i].result << ", .-" << QuadList.quads[i].result << endl;
         }
 
         if (funcRunning != "")
-            quadCode(QuadList.quads[i], sfile);
+            quadCode(QuadList.quads[i], asm_file);
     }
 }
 
+// main function
 int main(int argc, char *argv[])
 {
     SymTbl = &SymTbl_Global;
     yyparse();
 
-    asmFileName = "assn6_20CS30037_20CS30049_" + string(argv[argc - 1]) + ".s";
-    ofstream sfile;
-    sfile.open(asmFileName);
+    filename = "assn6_20CS30037_20CS30049_" + string(argv[argc - 1]) + ".s";
+
+    ofstream asm_file;
+    asm_file.open(filename);
 
     QuadList.print(); // Print the three address quads
 
@@ -615,9 +644,9 @@ int main(int argc, char *argv[])
 
     SymTbl = &SymTbl_Global;
 
-    generateTargetCode(sfile); // Generate the target assembly code
+    generateTargetCode(asm_file); // Generate the target assembly code
 
-    sfile.close();
+    asm_file.close();
 
     return 0;
 }

@@ -271,7 +271,7 @@ class Expression {
 
         int instr;
         DataType type;
-        string loc;
+        string addr;
         list<int> truelist;
         list<int> falselist;
         list<int> nextlist;

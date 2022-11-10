@@ -311,21 +311,21 @@ void convertToType(Expression* arg, Expression* res, DataType toType) {
 
     if(res->type == FLOAT) {
         if(toType == INT)
-            emit(arg->loc, res->loc, "", FtoI);
+            emit(arg->addr, res->addr, "", FtoI);
         else if(toType == CHAR)
-            emit(arg->loc, res->loc, "", FtoC);
+            emit(arg->addr, res->addr, "", FtoC);
     }
     else if(res->type == INT) {
         if(toType == FLOAT)
-            emit(arg->loc, res->loc, "", ItoF);
+            emit(arg->addr, res->addr, "", ItoF);
         else if(toType == CHAR)
-            emit(arg->loc, res->loc, "", ItoC);
+            emit(arg->addr, res->addr, "", ItoC);
     }
     else if(res->type == CHAR) {
         if(toType == FLOAT)
-            emit(arg->loc, res->loc, "", CtoF);
+            emit(arg->addr, res->addr, "", CtoF);
         else if(toType == INT)
-            emit(arg->loc, res->loc, "", CtoI);
+            emit(arg->addr, res->addr, "", CtoI);
     }
 }
 
@@ -358,7 +358,7 @@ void convertIntToBool(Expression* expr) {
     if(expr->type != BOOL) {
         expr->type = BOOL;
         expr->falselist = makelist(nextinstr);    // Add falselist for boolean expressions
-        emit("", expr->loc, "", IF_FALSE_GOTO);
+        emit("", expr->addr, "", IF_FALSE_GOTO);
         expr->truelist = makelist(nextinstr);     // Add truelist for boolean expressions
         emit("", "", "", GOTO);
     }
