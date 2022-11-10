@@ -36,7 +36,7 @@ Symbol::Symbol(): nestedTable(NULL) {}
 // Implementations of constructors and functions for the SymbolTable class
 SymbolTable::SymbolTable(): offset(0) {}
 
-Symbol* SymbolTable::lookup(string name, DataType t, int pc) {
+Symbol* SymbolTable::lookup(string name, data_type t, int pc) {
     if(table.count(name) == 0) {
         Symbol* sym = new Symbol();
         sym->name = name;
@@ -64,7 +64,7 @@ Symbol* SymbolTable::searchGlobal(string name) {
     return (table.count(name) ? table[name] : NULL);
 }
 
-string SymbolTable::gentemp(DataType t) {
+string SymbolTable::gentemp(data_type t) {
     // Create the name for the temporary
     string tempName = "t" + to_string(SymbolTable::tempCount++);
     
@@ -305,7 +305,8 @@ void backpatch(list<int> l, int address) {
 
 
 // Implementation of the overloaded convertToType functions
-void convertToType(Expression* arg, Expression* res, DataType toType) {
+void convertToType(Expression* arg, Expression* res, data_type toType) {
+    
     if(res->type == toType)
         return;
 
@@ -329,7 +330,7 @@ void convertToType(Expression* arg, Expression* res, DataType toType) {
     }
 }
 
-void convertToType(string t, DataType to, string f, DataType from) {
+void convertToType(string t, data_type to, string f, data_type from) {
     if(to == from)
         return;
     
@@ -365,7 +366,7 @@ void convertIntToBool(Expression* expr) {
 }
 
 // Implementation of the sizeOfType function
-int sizeOfType(DataType t) {
+int sizeOfType(data_type t) {
     if(t == VOID)
         return _SIZE_VOID;
     else if(t == CHAR)

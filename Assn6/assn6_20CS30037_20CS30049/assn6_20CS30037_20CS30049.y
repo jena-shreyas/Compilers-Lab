@@ -33,7 +33,7 @@
     void* ptr;                      // For a pointer
     SymbolType* symType;            // For the type of a symbol
     Symbol* symptr;                   // For a symbol
-    DataType types;                 // For the type of an expression
+    data_type types;                 // For the type of an expression
     opcode opc;                     // For an opcode
     Expression* expr;               // For an expression
     declaration* dec;               // For a declaration
@@ -105,7 +105,7 @@
 // The pointer non-terminal is treated with type intval
 %type <intval> pointer
 
-// Non-terminals of type DataType (denoting types)
+// Non-terminals of type data_type (denoting types)
 %type <types> type_specifier declaration_specifiers
 
 // Non-terminals of type declaration
@@ -213,7 +213,8 @@ postfix_expression:
                 emit(parameters[i]->name, "", "", PARAM);               // Emit the parameters
             }
 
-            DataType retType = funcTable->lookup("RETVAL")->type.type;  // Add an entry in the symbol table for the return value
+            data_type retType = funcTable->lookup("RETVAL")->type.type;  // Add an entry in the symbol table for the return value
+            
             if(retType == VOID)                                         // If the function returns void
                 emit($1->addr, (int)parameters.size(), CALL);
             else {                                                      // If the function returns a value
@@ -441,7 +442,7 @@ multiplicative_expression:
             }
 
             // Assign the result of the multiplication to the higher data type
-            DataType final = ((one->type.type > two->type.type) ? (one->type.type) : (two->type.type));
+            data_type final = ((one->type.type > two->type.type) ? (one->type.type) : (two->type.type));
             $$->addr = SymTbl->gentemp(final);                       // Store the final result in a temporary
             emit($$->addr, $1->addr, $3->addr, MULT);
         }
@@ -465,7 +466,7 @@ multiplicative_expression:
             }
 
             // Assign the result of the division to the higher data type
-            DataType final = ((one->type.type > two->type.type) ? (one->type.type) : (two->type.type));
+            data_type final = ((one->type.type > two->type.type) ? (one->type.type) : (two->type.type));
             $$->addr = SymTbl->gentemp(final);                       // Store the final result in a temporary
             emit($$->addr, $1->addr, $3->addr, DIV);
         }
@@ -489,7 +490,7 @@ multiplicative_expression:
             }
 
             // Assign the result of the modulo to the higher data type
-            DataType final = ((one->type.type > two->type.type) ? (one->type.type) : (two->type.type));
+            data_type final = ((one->type.type > two->type.type) ? (one->type.type) : (two->type.type));
             $$->addr = SymTbl->gentemp(final);                       // Store the final result in a temporary
             emit($$->addr, $1->addr, $3->addr, MOD);
         }
@@ -518,7 +519,7 @@ additive_expression:
             }
 
             // Assign the result of the addition to the higher data type
-            DataType final = ((one->type.type > two->type.type) ? (one->type.type) : (two->type.type));
+            data_type final = ((one->type.type > two->type.type) ? (one->type.type) : (two->type.type));
             $$->addr = SymTbl->gentemp(final);                       // Store the final result in a temporary
             emit($$->addr, $1->addr, $3->addr, ADD);
         }
@@ -542,7 +543,7 @@ additive_expression:
             }
 
             // Assign the result of the subtraction to the higher data type
-            DataType final = ((one->type.type > two->type.type) ? (one->type.type) : (two->type.type));
+            data_type final = ((one->type.type > two->type.type) ? (one->type.type) : (two->type.type));
             $$->addr = SymTbl->gentemp(final);                       // Store the final result in a temporary
             emit($$->addr, $1->addr, $3->addr, SUB);
         }
@@ -984,7 +985,7 @@ constant_expression:
 declaration: 
         declaration_specifiers init_declarator_list SEMICOLON
         {
-            DataType currType = $1;
+            data_type currType = $1;
             int currSize = -1;
             // Assign correct size for the data type
             if(currType == INT)
@@ -1587,7 +1588,7 @@ function_definition:
 function_prototype:
         declaration_specifiers declarator
         {
-            DataType currType = $1;
+            data_type currType = $1;
             int currSize = -1;
             if(currType == CHAR)
                 currSize = _SIZE_CHAR;

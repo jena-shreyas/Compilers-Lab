@@ -17,6 +17,8 @@
 #include <map>
 using namespace std;
 
+// Declaration of size of basic data types
+
 #define _SIZE_VOID      0        // void : 0 bytes
 #define _SIZE_CHAR      1        // char : 1 byte
 #define _SIZE_INT       4        // int  : 4 bytes
@@ -24,46 +26,48 @@ using namespace std;
 #define _SIZE_POINTER   4        // pointer: 4 bytes
 #define _SIZE_FUNCTION  0        // function: 0 bytes
 
-/*
-    An enum for all data types
-*/
-typedef enum {
-    VOID,
-    BOOL,
-    CHAR,
-    INT,
-    FLOAT,
-    ARRAY,
-    POINTER,
-    FUNCTION
-} DataType;
+/* Class Declarations*/
 
-/*
-    An enum for all opcodes
-*/
+class Symbol;                           // An instance of Symbol class represents an element in the symbol table
+class SymbolType;                       // SymbolType class represents the type of a symbol
+class SymbolValue;                      // SymbolValue class represents the value stored by a symbol in the symbol table
+class SymbolTable;                      // SymbolTable class represents the symbol table data structure
+
+class Quad;                             // An instance of Quad class represents a quadruple used in TAC generation
+class QuadArray;                        // represents the list of quads 
+
+extern QuadArray QuadList;              
+extern SymbolTable SymTbl_Global;
+extern SymbolTable* SymTbl;
+
+extern char* yytext;                    // import the yytext variable (which stores the lexeme) from the lexer
+extern int yyparse();                   // import the yyparse() function from bison parser
+
+// Defining all opcodes
 typedef enum  {
+
     ADD, SUB, MULT, DIV, MOD, SL, SR, 
     BW_AND, BW_OR, BW_XOR, 
     BW_U_NOT ,U_PLUS, U_MINUS, REFERENCE, DEREFERENCE, U_NEG, 
     GOTO_EQ, GOTO_NEQ, GOTO_GT, GOTO_GTE, GOTO_LT, GOTO_LTE, IF_GOTO, IF_FALSE_GOTO, 
     CtoI, ItoC, FtoI, ItoF, FtoC ,CtoF, 
     ASSIGN, GOTO, RETURN, PARAM, CALL, ARR_IDX_ARG, ARR_IDX_RES, FUNC_BEG, FUNC_END, L_DEREF
-} opcode;
 
-class Symbol;        // An instance of Symbol class represents an element in the symbol table
-class SymbolType;    // SymbolType class represents the type of a symbol
-class SymbolValue;   // SymbolValue class represents the value stored by a symbol in the symbol table
-class SymbolTable;   // SymbolTable class represents the symbol table data structure
+}opcode;
 
-class Quad;          // An instance of Quad class represents a quadruple used in TAC generation
-class QuadArray;     // represents the list of quads 
+// Defining all supported data types
+typedef enum {
 
-extern QuadArray QuadList;
-extern SymbolTable SymTbl_Global;
-extern SymbolTable* SymTbl;
+    INT,    
+    FLOAT,
+    CHAR,
+    VOID,
+    BOOL,
+    POINTER,
+    ARRAY,
+    FUNCTION
 
-extern char* yytext;   // import the yytext variable (which stores the lexeme) from the lexer
-extern int yyparse();  // import the yyparse() function from bison parser
+}data_type;
 
 // ##################### Class definitions and member functions ##################
 
@@ -73,8 +77,8 @@ class SymbolType {
     public:
 
         int pointers;                   // useful for pointer types
-        DataType type;                  // type of symbol (i.e, E.type)
-        DataType baseType;              // In case of arrays, points to base type; in case of pointers, points to the type of value pointed
+        data_type type;                  // type of symbol (i.e, E.type)
+        data_type baseType;              // In case of arrays, points to base type; in case of pointers, points to the type of value pointed
         vector<int> dims;               // In case of array type, this is used to store array dimensions
 
 };
@@ -148,11 +152,11 @@ class Symbol {
     Member Methods:
         SymbolTable()
         - Constructor
-        lookup(string name, DataType t = INT, int pc = 0): symbol*
+        lookup(string name, data_type t = INT, int pc = 0): symbol*
         - A method to lookup an id (given its name or lexeme) in the symbol table. If the id exists, the entry is returned, otherwise a new entry is created.
         searchGlobal(string name): symbol*
         - A method to search for an id in the global symbol table. If the id exists, the entry is returned, otherwise NULL is returned.
-        gentemp(DataType t = INT): string
+        gentemp(data_type t = INT): string
         - A method to generate a new temporary, insert it to the symbol table, and return a pointer to the entry
         print(): void
         - Prints the symbol table in a suitable fashion
@@ -162,17 +166,17 @@ class SymbolTable {
 
     public:
 
+        // member variables
         map<string, Symbol*> table;
         vector<Symbol*> symbols;
         int offset;
         static int tempCount;
 
+        // constrcutor and member functions
         SymbolTable();
-
-        Symbol* lookup(string name, DataType t = INT, int pc = 0);
-        string gentemp(DataType t = INT);
+        Symbol* lookup(string name, data_type t = INT, int pc = 0);
+        string gentemp(data_type t = INT);
         Symbol* searchGlobal(string name);
-
         void print(string tableName);
 
 };
@@ -198,13 +202,14 @@ class Quad {
 
     public:
 
+        // member variables
         opcode op;
         string arg1;
         string arg2;
         string result;
 
+        // constructor and member functions
         Quad(string, string, string, opcode);
-
         string print();
 
 };
@@ -219,16 +224,18 @@ class Quad {
         print(): void
         - Prints the entire list of quads
 */
+
 class QuadArray {
 
     public:
 
+        // member variables
         vector<Quad> quads;
 
+        // member functions
         void print();
 
 };
-
 
 /*
     Class to represent a parameter
@@ -236,12 +243,14 @@ class QuadArray {
     ------------
     Member Variables:
         name: string        Name of the parameter
-        type: DataType      Type of the parameter
+        type: data_type      Type of the parameter
 */
+
 class param {
 
     public:
 
+        // member variables
         string name;
         SymbolType type;
 
@@ -254,7 +263,7 @@ class param {
     ------------
     Member Variables:
         instr: int                  The instruction number of the expression
-        type: DataType              Type of the expression
+        type: data_type              Type of the expression
         loc: string                 The symbol table entry 
         truelist: list<int>         Truelist for boolean expressions
         falselist: list<int>        Falselist for boolean expressions
@@ -269,8 +278,9 @@ class Expression {
 
     public:
 
+        // member variables
         int instr;
-        DataType type;
+        data_type type;
         string addr;
         list<int> truelist;
         list<int> falselist;
@@ -278,6 +288,7 @@ class Expression {
         int fold;
         string* folder;
 
+        // constructor
         Expression();
 
 };
@@ -290,7 +301,7 @@ class Expression {
     Member Variables:
         name: string                Name of the declaration
         pointers: int               Number of pointers
-        type: DataType              Type of the declaration
+        type: data_type              Type of the declaration
         li: vector<int>             List of instructions for the declaration
         initVal: expression*        Initial value of the declaration
         pc: int                     Useful for pointers and arrays
@@ -299,10 +310,11 @@ class declaration {
 
     public:
 
+        // member variables
         string name;
         int pointers;
-        DataType type;
-        DataType nextType;
+        data_type type;
+        data_type nextType;
         vector<int> li;
         Expression* initVal;
         int pc;
@@ -340,9 +352,9 @@ void backpatch(list<int> l, int address);
 /*
     Converts a symbol of one type to another and returns a pointer to the converted symbol
 */
-void convertToType(Expression* arg, Expression* res, DataType toType);
+void convertToType(Expression* arg, Expression* res, data_type toType);
 
-void convertToType(string t, DataType to, string f, DataType from);
+void convertToType(string t, data_type to, string f, data_type from);
 
 /*
     Converts an int to a bool and adds required attributes
@@ -352,7 +364,7 @@ void convertIntToBool(Expression* expr);
 /*
     Auxiliary function to get the size of a type
 */
-int sizeOfType(DataType t);
+int sizeOfType(data_type t);
 
 /*
     Auxiliary function to print a type

@@ -384,7 +384,7 @@ void quadCode(Quad q, ofstream &asm_file)
     else if (q.op == PARAM)
     {
         int paramSize;
-        DataType t;
+        data_type t;
         if (glb3 != NULL)
             t = glb3->type.type;
         else
@@ -540,7 +540,7 @@ void quadCode(Quad q, ofstream &asm_file)
     }
 
     else if (q.op == RETURN)
-    
+
     {
         if (q.result != "")
             asm_file << "\tmovq\t" << toPrintRes << ", %rax" << endl;
