@@ -39,20 +39,20 @@
     All tokens
 */
 %token AUTO BREAK CASE CHAR_ CONST CONTINUE DEFAULT DO DOUBLE ELSE ENUM EXTERN FLOAT_ FOR GOTO_ IF INLINE INT_ LONG REGISTER RESTRICT RETURN_ SHORT SIGNED SIZEOF STATIC STRUCT SWITCH TYPEDEF UNION UNSIGNED VOID_ VOLATILE WHILE BOOL_ COMPLEX IMAGINARY
-%token SQUARE_BRACE_OPEN SQUARE_BRACE_CLOSE PARENTHESIS_OPEN PARENTHESIS_CLOSE CURLY_BRACE_OPEN CURLY_BRACE_CLOSE 
+%token LEFT_SQR_BRACKET RIGHT_SQR_BRACKET LEFT_PAREN RIGHT_PAREN LEFT_CURLY_BRACE RIGHT_CURLY_BRACE 
 %token DOT ARROW INCREMENT DECREMENT BITWISE_AND MULTIPLY ADD_ SUBTRACT BITWISE_NOR NOT DIVIDE MODULO 
-%token LSHIFT RSHIFT LESS_THAN GREATER_THAN LESS_THAN_EQUAL GREATER_THAN_EQUAL EQUAL NOT_EQUAL BITWISE_XOR BITWISE_OR 
+%token LEFT_SHIFT RIGHT_SHIFT LESS_THAN GREATER_THAN LESS_THAN_EQUALS GREATER_THAN_EQUALS EQUALS NOT_EQUALS BITWISE_XOR BITWISE_OR 
 %token LOGICAL_AND LOGICAL_OR QUESTION_MARK COLON SEMICOLON ELLIPSIS 
-%token ASSIGN_ MULTIPLY_ASSIGN DIVIDE_ASSIGN MODULO_ASSIGN ADD_ASSIGN SUBTRACT_ASSIGN LSHIFT_ASSIGN RSHIFT_ASSIGN AND_ASSIGN XOR_ASSIGN OR_ASSIGN COMMA HASH
+%token ASSIGNMENT  MUL_ASSIGNMENT DIV_ASSIGNMENT MOD_ASSIGNMENT ADD_ASSIGNMENT SUB_ASSIGNMENT LSHIFT_ASSIGNMENT RSHIFT_ASSIGNMENT AND_ASSIGNMENT XOR_ASSIGNMENT OR_ASSIGNMENT COMMA HASH
 
 // Identifiers are treated with type str
 %token <str> IDENTIFIER
 
 // Integer constants have a type intval
-%token <intval> INTEGER_CONSTANT
+%token <intval> INT_CONSTANT
 
 // Floating constants have a type floatval
-%token <floatval> FLOATING_CONSTANT
+%token <floatval> FLOAT_CONSTANT
 
 // Character constants have a type charval
 %token <charval> CHAR_CONSTANT
@@ -130,7 +130,7 @@ primary_expression:
             ST->lookup(s);          // Store entry in the symbol table
             $$->loc = s;            // Store pointer to string identifier name
         }
-        | INTEGER_CONSTANT
+        | INT_CONSTANT
         {
             $$ = new expression();                  // Create new expression
             $$->loc = ST->gentemp(INT);             // Generate a new temporary variable
@@ -139,7 +139,7 @@ primary_expression:
             val->setInitVal($1);                    // Set the initial value
             ST->lookup($$->loc)->initVal = val;     // Store in symbol table
         }
-        | FLOATING_CONSTANT
+        | FLOAT_CONSTANT
         {
             $$ = new expression();                  // Create new expression
             $$->loc = ST->gentemp(FLOAT);           // Generate a new temporary variable
@@ -163,7 +163,7 @@ primary_expression:
             $$->loc = ".LC" + to_string(strCount++);
             stringConsts.push_back(*($1));          // Add to the list of string constants
         }
-        | PARENTHESIS_OPEN expression PARENTHESIS_CLOSE
+        | LEFT_PAREN expression RIGHT_PAREN
         {
             $$ = $2;                                // Simple assignment
         }
@@ -172,7 +172,7 @@ primary_expression:
 postfix_expression: 
         primary_expression
         {}
-        | postfix_expression SQUARE_BRACE_OPEN expression SQUARE_BRACE_CLOSE
+        | postfix_expression LEFT_SQR_BRACKET expression RIGHT_SQR_BRACKET
         {
             symbolType to = ST->lookup($1->loc)->type;      // Get the type of the expression
             string f = "";
@@ -189,13 +189,13 @@ postfix_expression:
             emit(f, temp, "", ASSIGN);
             $$ = $1;
         }
-        | postfix_expression PARENTHESIS_OPEN PARENTHESIS_CLOSE
+        | postfix_expression LEFT_PAREN RIGHT_PAREN
         {   
             // Corresponds to calling a function with the function name but without any arguments
             symbolTable* funcTable = globalST.lookup($1->loc)->nestedTable;
             emit($1->loc, "0", "", CALL);
         }
-        | postfix_expression PARENTHESIS_OPEN argument_expression_list PARENTHESIS_CLOSE
+        | postfix_expression LEFT_PAREN argument_expression_list RIGHT_PAREN
         {   
             // Corresponds to calling a function with the function name and the appropriate number of arguments
             symbolTable* funcTable = globalST.lookup($1->loc)->nestedTable;
@@ -257,9 +257,9 @@ postfix_expression:
                 emit($1->loc, $1->loc, "1", SUB);                           // Decrement the value
             }
         }
-        | PARENTHESIS_OPEN type_name PARENTHESIS_CLOSE CURLY_BRACE_OPEN initializer_list CURLY_BRACE_CLOSE
+        | LEFT_PAREN type_name RIGHT_PAREN LEFT_CURLY_BRACE initializer_list RIGHT_CURLY_BRACE
         {}
-        | PARENTHESIS_OPEN type_name PARENTHESIS_CLOSE CURLY_BRACE_OPEN initializer_list COMMA CURLY_BRACE_CLOSE
+        | LEFT_PAREN type_name RIGHT_PAREN LEFT_CURLY_BRACE initializer_list COMMA RIGHT_CURLY_BRACE
         {}
         ;
 
@@ -357,7 +357,7 @@ unary_expression:
         }
         | SIZEOF unary_expression
         {}
-        | SIZEOF PARENTHESIS_OPEN type_name PARENTHESIS_CLOSE
+        | SIZEOF LEFT_PAREN type_name RIGHT_PAREN
         {}
         ;
 
@@ -391,7 +391,7 @@ unary_operator:
 cast_expression: 
         unary_expression
         {}
-        | PARENTHESIS_OPEN type_name PARENTHESIS_CLOSE cast_expression
+        | LEFT_PAREN type_name RIGHT_PAREN cast_expression
         {}
         ;
 
@@ -544,7 +544,7 @@ additive_expression:
 shift_expression: 
         additive_expression
         {}
-        | shift_expression LSHIFT additive_expression
+        | shift_expression LEFT_SHIFT additive_expression
         {
             // Indicates left shift
             $$ = new expression();
@@ -565,7 +565,7 @@ shift_expression:
             $$->loc = ST->gentemp(one->type.type);              // Assign the result of the left shift to the data type of the left operand
             emit($$->loc, $1->loc, $3->loc, SL);
         }
-        | shift_expression RSHIFT additive_expression
+        | shift_expression RIGHT_SHIFT additive_expression
         {
             // Indicates right shift
             $$ = new expression();
@@ -645,7 +645,7 @@ relational_expression:
             $$->falselist = makelist(nextinstr);                // Set the falselist to the next instruction
             emit("", "", "", GOTO);                             // Emit "goto ..."
         }
-        | relational_expression LESS_THAN_EQUAL shift_expression
+        | relational_expression LESS_THAN_EQUALS shift_expression
         {
             $$ = new expression();
             symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
@@ -672,7 +672,7 @@ relational_expression:
             $$->falselist = makelist(nextinstr);                // Set the falselist to the next instruction
             emit("", "", "", GOTO);                             // Emit "goto ..."
         }
-        | relational_expression GREATER_THAN_EQUAL shift_expression
+        | relational_expression GREATER_THAN_EQUALS shift_expression
         {
             $$ = new expression();
             symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
@@ -707,7 +707,7 @@ equality_expression:
             $$ = new expression();
             $$ = $1;                // Simple assignment
         }
-        | equality_expression EQUAL relational_expression
+        | equality_expression EQUALS relational_expression
         {
             $$ = new expression();
             symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
@@ -734,7 +734,7 @@ equality_expression:
             $$->falselist = makelist(nextinstr);                // Set the falselist to the next instruction
             emit("", "", "", GOTO);                             // Emit "goto ..."
         }
-        | equality_expression NOT_EQUAL relational_expression
+        | equality_expression NOT_EQUALS relational_expression
         {
             $$ = new expression();
             symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
@@ -938,27 +938,27 @@ assignment_expression:
         ;
 
 assignment_operator: 
-        ASSIGN_
+        ASSIGNMENT 
         {}
-        | MULTIPLY_ASSIGN
+        | MUL_ASSIGNMENT 
         {}
-        | DIVIDE_ASSIGN
+        | DIV_ASSIGNMENT 
         {}
-        | MODULO_ASSIGN
+        | MOD_ASSIGNMENT 
         {}
-        | ADD_ASSIGN
+        | ADD_ASSIGNMENT
         {}
-        | SUBTRACT_ASSIGN
+        | SUB_ASSIGNMENT
         {}
-        | LSHIFT_ASSIGN
+        | LSHIFT_ASSIGNMENT
         {}
-        | RSHIFT_ASSIGN
+        | RSHIFT_ASSIGNMENT
         {}
-        | AND_ASSIGN
+        | AND_ASSIGNMENT
         {}
-        | XOR_ASSIGN
+        | XOR_ASSIGNMENT
         {}
-        | OR_ASSIGN
+        | OR_ASSIGNMENT
         {}
         ;
 
@@ -1075,7 +1075,7 @@ init_declarator:
             $$ = $1;
             $$->initVal = NULL;         // Initialize the initVal to NULL as no initialization is done
         }
-        | declarator ASSIGN_ initializer
+        | declarator ASSIGNMENT  initializer
         {   
             $$ = $1;
             $$->initVal = $3;           // Initialize the initVal to the value provided
@@ -1145,11 +1145,11 @@ specifier_qualifier_list_opt:
         ;
 
 enum_specifier: 
-        ENUM CURLY_BRACE_OPEN enumerator_list CURLY_BRACE_CLOSE
+        ENUM LEFT_CURLY_BRACE enumerator_list RIGHT_CURLY_BRACE
         {}
-        | ENUM IDENTIFIER CURLY_BRACE_OPEN enumerator_list CURLY_BRACE_CLOSE
+        | ENUM IDENTIFIER LEFT_CURLY_BRACE enumerator_list RIGHT_CURLY_BRACE
         {}
-        | ENUM IDENTIFIER CURLY_BRACE_OPEN enumerator_list COMMA CURLY_BRACE_CLOSE
+        | ENUM IDENTIFIER LEFT_CURLY_BRACE enumerator_list COMMA RIGHT_CURLY_BRACE
         {}
         | ENUM IDENTIFIER
         {}
@@ -1165,7 +1165,7 @@ enumerator_list:
 enumerator: 
         IDENTIFIER
         {}
-        | IDENTIFIER ASSIGN_ constant_expression
+        | IDENTIFIER ASSIGNMENT  constant_expression
         {}
         ;
 
@@ -1202,16 +1202,16 @@ direct_declarator:
             $$ = new declaration();
             $$->name = *($1);
         }
-        | PARENTHESIS_OPEN declarator PARENTHESIS_CLOSE
+        | LEFT_PAREN declarator RIGHT_PAREN
         {}
-        | direct_declarator SQUARE_BRACE_OPEN type_qualifier_list_opt SQUARE_BRACE_CLOSE
+        | direct_declarator LEFT_SQR_BRACKET type_qualifier_list_opt RIGHT_SQR_BRACKET
         {
             $1->type = ARRAY;       // Array type
             $1->nextType = INT;     // Array of ints
             $$ = $1;
             $$->li.push_back(0);
         }
-        | direct_declarator SQUARE_BRACE_OPEN type_qualifier_list_opt assignment_expression SQUARE_BRACE_CLOSE
+        | direct_declarator LEFT_SQR_BRACKET type_qualifier_list_opt assignment_expression RIGHT_SQR_BRACKET
         {
             $1->type = ARRAY;       // Array type
             $1->nextType = INT;     // Array of ints
@@ -1219,17 +1219,17 @@ direct_declarator:
             int index = ST->lookup($4->loc)->initVal->i;
             $$->li.push_back(index);
         }
-        | direct_declarator SQUARE_BRACE_OPEN STATIC type_qualifier_list assignment_expression SQUARE_BRACE_CLOSE
+        | direct_declarator LEFT_SQR_BRACKET STATIC type_qualifier_list assignment_expression RIGHT_SQR_BRACKET
         {}
-        | direct_declarator SQUARE_BRACE_OPEN type_qualifier_list STATIC assignment_expression SQUARE_BRACE_CLOSE
+        | direct_declarator LEFT_SQR_BRACKET type_qualifier_list STATIC assignment_expression RIGHT_SQR_BRACKET
         {}
-        | direct_declarator SQUARE_BRACE_OPEN type_qualifier_list_opt MULTIPLY SQUARE_BRACE_CLOSE
+        | direct_declarator LEFT_SQR_BRACKET type_qualifier_list_opt MULTIPLY RIGHT_SQR_BRACKET
         {
             $1->type = POINTER;     // Pointer type
             $1->nextType = INT;
             $$ = $1;
         }
-        | direct_declarator PARENTHESIS_OPEN parameter_type_list_opt PARENTHESIS_CLOSE
+        | direct_declarator LEFT_PAREN parameter_type_list_opt RIGHT_PAREN
         {
             $$ = $1;
             $$->type = FUNCTION;    // Function type
@@ -1255,7 +1255,7 @@ direct_declarator:
             ST = funcTable;         // Set the pointer to the symbol table to the function's symbol table
             emit($$->name, "", "", FUNC_BEG);
         }
-        | direct_declarator PARENTHESIS_OPEN identifier_list PARENTHESIS_CLOSE
+        | direct_declarator LEFT_PAREN identifier_list RIGHT_PAREN
         {}
         ;
 
@@ -1352,9 +1352,9 @@ initializer:
         {
             $$ = $1;   // Simple assignment
         }
-        | CURLY_BRACE_OPEN initializer_list CURLY_BRACE_CLOSE
+        | LEFT_CURLY_BRACE initializer_list RIGHT_CURLY_BRACE
         {}
-        | CURLY_BRACE_OPEN initializer_list COMMA CURLY_BRACE_CLOSE
+        | LEFT_CURLY_BRACE initializer_list COMMA RIGHT_CURLY_BRACE
         {}
         ;
 
@@ -1373,7 +1373,7 @@ designation_opt:
         ;
 
 designation: 
-        designator_list ASSIGN_
+        designator_list ASSIGNMENT 
         {}
         ;
 
@@ -1385,7 +1385,7 @@ designator_list:
         ;
 
 designator: 
-        SQUARE_BRACE_OPEN constant_expression SQUARE_BRACE_CLOSE
+        LEFT_SQR_BRACKET constant_expression RIGHT_SQR_BRACKET
         {}
         | DOT IDENTIFIER
         {}
@@ -1411,9 +1411,9 @@ labeled_statement:
         ;
 
 compound_statement: 
-        CURLY_BRACE_OPEN CURLY_BRACE_CLOSE
+        LEFT_CURLY_BRACE RIGHT_CURLY_BRACE
         {}
-        | CURLY_BRACE_OPEN block_item_list CURLY_BRACE_CLOSE
+        | LEFT_CURLY_BRACE block_item_list RIGHT_CURLY_BRACE
         {
             $$ = $2;
         }
@@ -1454,7 +1454,7 @@ expression_statement:
         ;
 
 selection_statement: 
-        IF PARENTHESIS_OPEN expression N PARENTHESIS_CLOSE M statement N
+        IF LEFT_PAREN expression N RIGHT_PAREN M statement N
         {
             /*
                 This production rule has been augmented for control flow
@@ -1467,7 +1467,7 @@ selection_statement:
             $7->nextlist = merge($8->nextlist, $7->nextlist);
             $$->nextlist = merge($3->falselist, $7->nextlist);
         }
-        | IF PARENTHESIS_OPEN expression N PARENTHESIS_CLOSE M statement N ELSE M statement N
+        | IF LEFT_PAREN expression N RIGHT_PAREN M statement N ELSE M statement N
         {
             /*
                 This production rule has been augmented for control flow
@@ -1482,12 +1482,12 @@ selection_statement:
             $$->nextlist = merge($$->nextlist, $11->nextlist);
             $$->nextlist = merge($$->nextlist, $12->nextlist);
         }
-        | SWITCH PARENTHESIS_OPEN expression PARENTHESIS_CLOSE statement
+        | SWITCH LEFT_PAREN expression RIGHT_PAREN statement
         {}
         ;
 
 iteration_statement: 
-        WHILE M PARENTHESIS_OPEN expression N PARENTHESIS_CLOSE M statement
+        WHILE M LEFT_PAREN expression N RIGHT_PAREN M statement
         {   
             /*
                 This production rule has been augmented with non-terminals like M and N to handle the control flow and backpatching
@@ -1501,7 +1501,7 @@ iteration_statement:
             backpatch($4->truelist, $7->instr);     // Backpatching - if expression is true, go to M
             backpatch($8->nextlist, $2->instr);     // Backpatching - go to the beginning of the loop
         }
-        | DO M statement M WHILE PARENTHESIS_OPEN expression N PARENTHESIS_CLOSE SEMICOLON
+        | DO M statement M WHILE LEFT_PAREN expression N RIGHT_PAREN SEMICOLON
         {
             /*
                 This production rule has been augmented with non-terminals like M and N to handle the control flow and backpatching
@@ -1513,7 +1513,7 @@ iteration_statement:
             backpatch($3->nextlist, $4->instr);     // Backpatching - go to the beginning of the loop
             $$->nextlist = $7->falselist;
         }
-        | FOR PARENTHESIS_OPEN expression_statement M expression_statement N M expression N PARENTHESIS_CLOSE M statement
+        | FOR LEFT_PAREN expression_statement M expression_statement N M expression N RIGHT_PAREN M statement
         {
             /*
                 This production rule has been augmented with non-terminals like M and N to handle the control flow and backpatching

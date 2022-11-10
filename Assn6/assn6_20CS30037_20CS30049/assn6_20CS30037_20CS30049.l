@@ -1,4 +1,14 @@
+/* C Declarations and Definitions */
 %{  
+    /* 
+    Compilers Lab : Assignment 5
+    Group Members:
+        1. Pranav Nyati (20CS30037)
+        2. Shreyas Jena (20CS30049)
+    
+    
+    Lexer for tinyC using Flex      
+    */
     #include <stdio.h>
     #include "assn6_20CS30037_20CS30049_translator.h"
     #include "assn6_20CS30037_20CS30049.tab.h"
@@ -14,12 +24,12 @@
 
 IDENTIFIER                      [_a-zA-Z][_a-zA-Z0-9]*
 
-INTEGER_CONSTANT                [1-9][0-9]*|[0]
+INT_CONSTANT                    [1-9][0-9]*|[0]
 
 DIGIT_SEQUENCE                  [0-9]+
 EXPONENT_PART                   [eE]([+-]?){DIGIT_SEQUENCE}
 FRACTIONAL_CONSTANT             ({DIGIT_SEQUENCE}?\.{DIGIT_SEQUENCE})|({DIGIT_SEQUENCE}\.)
-FLOATING_CONSTANT               ({FRACTIONAL_CONSTANT}{EXPONENT_PART}?)|({DIGIT_SEQUENCE}{EXPONENT_PART})
+FLOAT_CONSTANT                  ({FRACTIONAL_CONSTANT}{EXPONENT_PART}?)|({DIGIT_SEQUENCE}{EXPONENT_PART})
 
 ENUM_CONSTANT                   {IDENTIFIER}
 
@@ -28,7 +38,7 @@ C_CHAR                          [^\'\\\n]|{ESCAPE_SEQUENCE}
 C_CHAR_SEQUENCE                 {C_CHAR}+
 CHAR_CONSTANT                   \'({C_CHAR_SEQUENCE})\'
 
-CONSTANT                        {INTEGER_CONSTANT}|{FLOATING_CONSTANT}|{ENUM_CONSTANT}|{CHAR_CONSTANT}
+CONSTANT                        {INT_CONSTANT}|{FLOAT_CONSTANT}|{ENUM_CONSTANT}|{CHAR_CONSTANT}
 
 S_CHAR                          [^\"\\\n]|{ESCAPE_SEQUENCE}
 S_CHAR_SEQUENCE                 {S_CHAR}+
@@ -87,12 +97,12 @@ WS                              [ \t\n]
 "_Complex"                      { return COMPLEX; }
 "_Imaginary"                    { return IMAGINARY; }
 
-"["                             { return SQUARE_BRACE_OPEN; }
-"]"                             { return SQUARE_BRACE_CLOSE; }
-"("                             { return PARENTHESIS_OPEN; }
-")"                             { return PARENTHESIS_CLOSE; }
-"{"                             { return CURLY_BRACE_OPEN; }
-"}"                             { return CURLY_BRACE_CLOSE; }
+"["                             { return LEFT_SQR_BRACKET; }
+"]"                             { return RIGHT_SQR_BRACKET; }
+"("                             { return LEFT_PAREN; }
+")"                             { return RIGHT_PAREN; }
+"{"                             { return LEFT_CURLY_BRACE; }
+"}"                             { return RIGHT_CURLY_BRACE; }
 "."                             { return DOT; }
 "->"                            { return ARROW; }
 "++"                            { return INCREMENT; }
@@ -105,14 +115,14 @@ WS                              [ \t\n]
 "!"                             { return NOT; }
 "/"                             { return DIVIDE; }
 "%"                             { return MODULO; }
-"<<"                            { return LSHIFT; }
-">>"                            { return RSHIFT; }
+"<<"                            { return LEFT_SHIFT; }
+">>"                            { return RIGHT_SHIFT; }
 "<"                             { return LESS_THAN; }
 ">"                             { return GREATER_THAN; }
-"<="                            { return LESS_THAN_EQUAL; }
-">="                            { return GREATER_THAN_EQUAL; }
-"=="                            { return EQUAL; }
-"!="                            { return NOT_EQUAL; }
+"<="                            { return LESS_THAN_EQUALS; }
+">="                            { return GREATER_THAN_EQUALS; }
+"=="                            { return EQUALS; }
+"!="                            { return NOT_EQUALS; }
 "^"                             { return BITWISE_XOR; }
 "|"                             { return BITWISE_OR; }
 "&&"                            { return LOGICAL_AND; }
@@ -121,23 +131,23 @@ WS                              [ \t\n]
 ":"                             { return COLON; }
 ";"                             { return SEMICOLON; }
 "..."                           { return ELLIPSIS; }
-"="                             { return ASSIGN_; }
-"*="                            { return MULTIPLY_ASSIGN; }
-"/="                            { return DIVIDE_ASSIGN; }
-"%="                            { return MODULO_ASSIGN; }
-"+="                            { return ADD_ASSIGN; }
-"-="                            { return SUBTRACT_ASSIGN; }
-"<<="                           { return LSHIFT_ASSIGN; }
-">>="                           { return RSHIFT_ASSIGN; }
-"&="                            { return AND_ASSIGN; }
-"^="                            { return XOR_ASSIGN; }
-"|="                            { return OR_ASSIGN; }
+"="                             { return ASSIGNMENT; }
+"*="                            { return MUL_ASSIGNMENT; }
+"/="                            { return DIV_ASSIGNMENT; }
+"%="                            { return MOD_ASSIGNMENT; }
+"+="                            { return ADD_ASSIGNMENT; }
+"-="                            { return SUB_ASSIGNMENT; }
+"<<="                           { return LSHIFT_ASSIGNMENT; }
+">>="                           { return RSHIFT_ASSIGNMENT; }
+"&="                            { return AND_ASSIGNMENT; }
+"^="                            { return XOR_ASSIGNMENT; }
+"|="                            { return OR_ASSIGNMENT; }
 ","                             { return COMMA; }
 "#"                             { return HASH; }
 
 {IDENTIFIER}                    { yylval.str = new string(yytext); return IDENTIFIER; }
-{INTEGER_CONSTANT}              { yylval.intval = atoi(yytext); return INTEGER_CONSTANT; }
-{FLOATING_CONSTANT}             { yylval.floatval = atof(yytext); return FLOATING_CONSTANT; }
+{INT_CONSTANT}                  { yylval.intval = atoi(yytext); return INT_CONSTANT; }
+{FLOAT_CONSTANT}                { yylval.floatval = atof(yytext); return FLOAT_CONSTANT; }
 {CHAR_CONSTANT}                 { yylval.charval = yytext[1]; return CHAR_CONSTANT; }
 {STRING_LITERAL}                { yylval.str = new string(yytext); return STRING_LITERAL; }
 {WS}                            { /* ignore whitespaces */ }
