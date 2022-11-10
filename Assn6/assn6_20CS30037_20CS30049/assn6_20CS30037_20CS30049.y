@@ -38,8 +38,8 @@
     Expression* expr;               // For an expression
     declaration* dec;               // For a declaration
     vector<declaration*> *decList;  // For a list of declarations
-    param* prm;                     // For a parameter
-    vector<param*> *prmList;        // For a list of parameters
+    Parameter* prm;                     // For a parameter
+    vector<Parameter*> *prmList;        // For a list of parameters
 }
 
 /*
@@ -143,7 +143,7 @@ primary_expression:
             $$->addr = SymTbl->gentemp(INT);             // Generate a new temporary variable
             emit($$->addr, $1, ASSIGN);
             SymbolValue* val = new SymbolValue();
-            val->setInit($1);                    // Set the initial value
+            val->init($1);                    // Set the initial value
             SymTbl->lookup($$->addr)->initVal = val;     // Store in symbol table
         }
         | FLOAT_CONSTANT
@@ -152,7 +152,7 @@ primary_expression:
             $$->addr = SymTbl->gentemp(FLOAT);           // Generate a new temporary variable
             emit($$->addr, $1, ASSIGN);
             SymbolValue* val = new SymbolValue();
-            val->setInit($1);                    // Set the initial value
+            val->init($1);                    // Set the initial value
             SymTbl->lookup($$->addr)->initVal = val;     // Store in symbol table
         }
         | CHAR_CONSTANT
@@ -161,7 +161,7 @@ primary_expression:
             $$->addr = SymTbl->gentemp(CHAR);            // Generate a new temporary variable
             emit($$->addr, $1, ASSIGN);
             SymbolValue* val = new SymbolValue();
-            val->setInit($1);                    // Set the initial value
+            val->init($1);                    // Set the initial value
             SymTbl->lookup($$->addr)->initVal = val;     // Store in symbol table
         }
         | STRING_LITERAL
@@ -206,7 +206,7 @@ postfix_expression:
         {   
             // Corresponds to calling a function with the function name and the appropriate number of arguments
             SymbolTable* funcTable = SymTbl_Global.lookup($1->addr)->nestedTable;
-            vector<param*> parameters = *($3);                          // Get the list of parameters
+            vector<Parameter*> parameters = *($3);                          // Get the list of parameters
             vector<Symbol*> paramsList = funcTable->symbols;
 
             for(int i = 0; i < (int)parameters.size(); i++) {
@@ -274,15 +274,15 @@ postfix_expression:
 argument_expression_list: 
         assignment_expression
         {
-            param* first = new param();                 // Create a new parameter
+            Parameter* first = new Parameter();                 // Create a new parameter
             first->name = $1->addr;
             first->type = SymTbl->lookup($1->addr)->type;
-            $$ = new vector<param*>;
+            $$ = new vector<Parameter*>;
             $$->push_back(first);                       // Add the parameter to the list
         }
         | argument_expression_list COMMA assignment_expression
         {
-            param* next = new param();                  // Create a new parameter
+            Parameter* next = new Parameter();                  // Create a new parameter
             next->name = $3->addr;
             next->type = SymTbl->lookup(next->name)->type;
             $$ = $1;
@@ -1224,7 +1224,7 @@ direct_declarator:
             $1->type = ARRAY;       // Array type
             $1->nextType = INT;     // Array of ints
             $$ = $1;
-            int index = SymTbl->lookup($4->addr)->initVal->i;
+            int index = SymTbl->lookup($4->addr)->initVal->int_;
             $$->li.push_back(index);
         }
         | direct_declarator LEFT_SQR_BRACKET STATIC type_qualifier_list assignment_expression RIGHT_SQR_BRACKET
@@ -1244,9 +1244,9 @@ direct_declarator:
             Symbol* funcData = SymTbl->lookup($$->name, $$->type);
             SymbolTable* funcTable = new SymbolTable();
             funcData->nestedTable = funcTable;
-            vector<param*> paramList = *($3);   // Get the parameter list
+            vector<Parameter*> paramList = *($3);   // Get the parameter list
             for(int i = 0; i < (int)paramList.size(); i++) {
-                param* curParam = paramList[i];
+                Parameter* curParam = paramList[i];
                 if(curParam->type.type == ARRAY) {          // If the parameter is an array
                     funcTable->lookup(curParam->name, curParam->type.type);
                     funcTable->lookup(curParam->name)->type.baseType = INT;
@@ -1272,7 +1272,7 @@ parameter_type_list_opt:
         {}
         | %empty
         {
-            $$ = new vector<param*>;
+            $$ = new vector<Parameter*>;
         }
         ;
 
@@ -1313,7 +1313,7 @@ parameter_type_list:
 parameter_list: 
         parameter_declaration
         {
-            $$ = new vector<param*>;         // Create a new vector of parameters
+            $$ = new vector<Parameter*>;         // Create a new vector of parameters
             $$->push_back($1);              // Add the parameter to the vector
         }
         | parameter_list COMMA parameter_declaration
@@ -1326,7 +1326,7 @@ parameter_list:
 parameter_declaration: 
         declaration_specifiers declarator
         {
-            $$ = new param();
+            $$ = new Parameter();
             $$->name = $2->name;
             if($2->type == ARRAY) {
                 $$->type.type = ARRAY;

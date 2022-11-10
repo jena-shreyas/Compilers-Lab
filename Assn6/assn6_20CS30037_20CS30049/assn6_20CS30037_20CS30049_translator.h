@@ -36,9 +36,11 @@ class SymbolTable;                      // SymbolTable class represents the symb
 class Quad;                             // An instance of Quad class represents a quadruple used in TAC generation
 class QuadArray;                        // represents the list of quads 
 
-extern QuadArray QuadList;              
-extern SymbolTable SymTbl_Global;
-extern SymbolTable* SymTbl;
+/* External Variable Declarations*/
+
+extern QuadArray QuadList;              // stores the list of quads
+extern SymbolTable SymTbl_Global;       // stores the global symbol table object
+extern SymbolTable* SymTbl;             // pointer to the current symbol table
 
 extern char* yytext;                    // import the yytext variable (which stores the lexeme) from the lexer
 extern int yyparse();                   // import the yyparse() function from bison parser
@@ -98,14 +100,14 @@ class SymbolValue {
 
     public:
     
-        int i;
-        char c;
-        float f;
-        void* p;
+        int int_;
+        char char_;
+        float flt_;
+        void* ptr_;
 
-        void setInit(int val);
-        void setInit(char val);
-        void setInit(float val);
+        void init(int val);
+        void init(char val);
+        void init(float val);
 
 };
 
@@ -210,7 +212,7 @@ class Quad {
 
         // constructor and member functions
         Quad(string, string, string, opcode);
-        string print();
+        string print_quad();
 
 };
 
@@ -233,7 +235,7 @@ class QuadArray {
         vector<Quad> quads;
 
         // member functions
-        void print();
+        void print_quads();
 
 };
 
@@ -246,7 +248,7 @@ class QuadArray {
         type: data_type      Type of the parameter
 */
 
-class param {
+class Parameter {
 
     public:
 

@@ -32,7 +32,7 @@ void printGlobal(ofstream &asm_file)
                 asm_file << "\t.type\t" << sym->name << ", @object" << endl;
                 asm_file << "\t.size\t" << sym->name << ", 1" << endl;
                 asm_file << sym->name << ":" << endl;
-                asm_file << "\t.byte\t" << sym->initVal->c << endl;
+                asm_file << "\t.byte\t" << sym->initVal->char_ << endl;
             }
             else
                 asm_file << "\t.comm\t" << sym->name << ",1,1" << endl;
@@ -47,7 +47,7 @@ void printGlobal(ofstream &asm_file)
                 asm_file << "\t.type\t" << sym->name << ", @object" << endl;
                 asm_file << "\t.size\t" << sym->name << ", 4" << endl;
                 asm_file << sym->name << ":" << endl;
-                asm_file << "\t.long\t" << sym->initVal->i << endl;
+                asm_file << "\t.long\t" << sym->initVal->int_ << endl;
             }
             else
                 asm_file << "\t.comm\t" << sym->name << ",4,4" << endl;
@@ -562,7 +562,7 @@ void generateTargetCode(ofstream &asm_file)
     for (int i = 0; i < (int)QuadList.quads.size(); i++)
     {
         // Print the quad as a comment in the assembly file
-        asm_file << "# " << QuadList.quads[i].print() << endl;
+        asm_file << "# " << QuadList.quads[i].print_quad() << endl;
         if (labels.count(i))
             asm_file << labels[i] << ":" << endl;
 
@@ -638,7 +638,7 @@ int main(int argc, char *argv[])
     ofstream asm_file;
     asm_file.open(filename);
 
-    QuadList.print(); // Print the three address quads
+    QuadList.print_quads(); // Print the three address quads
 
     SymTbl->print("SymTbl.global"); // Print the symbol tables
 
