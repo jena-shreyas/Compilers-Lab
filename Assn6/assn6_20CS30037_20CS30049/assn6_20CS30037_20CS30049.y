@@ -1,5 +1,12 @@
 %{
-
+    /* 
+    Compilers Lab : Assignment 6
+    Group Members:
+        1. Pranav Nyati (20CS30037)
+        2. Shreyas Jena (20CS30049)
+    
+    * Bison specifications
+    */
     #include <iostream>
     #include "assn6_20CS30037_20CS30049_translator.h"
     using namespace std;
@@ -10,9 +17,9 @@
     extern int yylineno;                    // Used for keeping track of the line number
 
     extern int nextinstr;                   // Used for keeping track of the next instruction
-    extern QuadArray quadList;              // List of all quads
-    extern SymbolTable globalST;            // Global symbol table
-    extern SymbolTable* ST;                 // Pointer to the current symbol table
+    extern QuadArray QuadList;              // List of all quads
+    extern SymbolTable SymTbl_Global;            // Global symbol table
+    extern SymbolTable* SymTbl;                 // Pointer to the current symbol table
     extern vector<string> stringConsts;     // List of all string constants
 
     int strCount = 0;                       // Counter for string constants
@@ -127,35 +134,35 @@ primary_expression:
         {
             $$ = new Expression();  // Create new expression
             string s = *($1);
-            ST->lookup(s);          // Store entry in the symbol table
+            SymTbl->lookup(s);          // Store entry in the symbol table
             $$->loc = s;            // Store pointer to string identifier name
         }
         | INT_CONSTANT
         {
             $$ = new Expression();                  // Create new expression
-            $$->loc = ST->gentemp(INT);             // Generate a new temporary variable
+            $$->loc = SymTbl->gentemp(INT);             // Generate a new temporary variable
             emit($$->loc, $1, ASSIGN);
             SymbolValue* val = new SymbolValue();
             val->setInit($1);                    // Set the initial value
-            ST->lookup($$->loc)->initVal = val;     // Store in symbol table
+            SymTbl->lookup($$->loc)->initVal = val;     // Store in symbol table
         }
         | FLOAT_CONSTANT
         {
             $$ = new Expression();                  // Create new expression
-            $$->loc = ST->gentemp(FLOAT);           // Generate a new temporary variable
+            $$->loc = SymTbl->gentemp(FLOAT);           // Generate a new temporary variable
             emit($$->loc, $1, ASSIGN);
             SymbolValue* val = new SymbolValue();
             val->setInit($1);                    // Set the initial value
-            ST->lookup($$->loc)->initVal = val;     // Store in symbol table
+            SymTbl->lookup($$->loc)->initVal = val;     // Store in symbol table
         }
         | CHAR_CONSTANT
         {
             $$ = new Expression();                  // Create new expression
-            $$->loc = ST->gentemp(CHAR);            // Generate a new temporary variable
+            $$->loc = SymTbl->gentemp(CHAR);            // Generate a new temporary variable
             emit($$->loc, $1, ASSIGN);
             SymbolValue* val = new SymbolValue();
             val->setInit($1);                    // Set the initial value
-            ST->lookup($$->loc)->initVal = val;     // Store in symbol table
+            SymTbl->lookup($$->loc)->initVal = val;     // Store in symbol table
         }
         | STRING_LITERAL
         {
@@ -174,14 +181,14 @@ postfix_expression:
         {}
         | postfix_expression LEFT_SQR_BRACKET expression RIGHT_SQR_BRACKET
         {
-            SymbolType to = ST->lookup($1->loc)->type;      // Get the type of the expression
+            SymbolType to = SymTbl->lookup($1->loc)->type;      // Get the type of the expression
             string f = "";
             if(!($1->fold)) {
-                f = ST->gentemp(INT);                       // Generate a new temporary variable
+                f = SymTbl->gentemp(INT);                       // Generate a new temporary variable
                 emit(f, 0, ASSIGN);
                 $1->folder = new string(f);
             }
-            string temp = ST->gentemp(INT);
+            string temp = SymTbl->gentemp(INT);
 
             // Emit the necessary quads
             emit(temp, $3->loc, "", ASSIGN);
@@ -192,13 +199,13 @@ postfix_expression:
         | postfix_expression LEFT_PAREN RIGHT_PAREN
         {   
             // Corresponds to calling a function with the function name but without any arguments
-            SymbolTable* funcTable = globalST.lookup($1->loc)->nestedTable;
+            SymbolTable* funcTable = SymTbl_Global.lookup($1->loc)->nestedTable;
             emit($1->loc, "0", "", CALL);
         }
         | postfix_expression LEFT_PAREN argument_expression_list RIGHT_PAREN
         {   
             // Corresponds to calling a function with the function name and the appropriate number of arguments
-            SymbolTable* funcTable = globalST.lookup($1->loc)->nestedTable;
+            SymbolTable* funcTable = SymTbl_Global.lookup($1->loc)->nestedTable;
             vector<param*> parameters = *($3);                          // Get the list of parameters
             vector<Symbol*> paramsList = funcTable->symbols;
 
@@ -210,7 +217,7 @@ postfix_expression:
             if(retType == VOID)                                         // If the function returns void
                 emit($1->loc, (int)parameters.size(), CALL);
             else {                                                      // If the function returns a value
-                string retVal = ST->gentemp(retType);
+                string retVal = SymTbl->gentemp(retType);
                 emit($1->loc, to_string(parameters.size()), retVal, CALL);
                 $$ = new Expression();
                 $$->loc = retVal;
@@ -223,17 +230,17 @@ postfix_expression:
         | postfix_expression INCREMENT
         {   
             $$ = new Expression();                                          // Create new expression
-            SymbolType t = ST->lookup($1->loc)->type;                       // Get the type of the expression and generate a temporary variable
+            SymbolType t = SymTbl->lookup($1->loc)->type;                       // Get the type of the expression and generate a temporary variable
             if(t.type == ARRAY) {
-                $$->loc = ST->gentemp(ST->lookup($1->loc)->type.baseType);
+                $$->loc = SymTbl->gentemp(SymTbl->lookup($1->loc)->type.baseType);
                 emit($$->loc, $1->loc, *($1->folder), ARR_IDX_ARG);
-                string temp = ST->gentemp(t.baseType);
+                string temp = SymTbl->gentemp(t.baseType);
                 emit(temp, $1->loc, *($1->folder), ARR_IDX_ARG);
                 emit(temp, temp, "1", ADD);
                 emit($1->loc, temp, *($1->folder), ARR_IDX_RES);
             }
             else {
-                $$->loc = ST->gentemp(ST->lookup($1->loc)->type.type);
+                $$->loc = SymTbl->gentemp(SymTbl->lookup($1->loc)->type.type);
                 emit($$->loc, $1->loc, "", ASSIGN);                         // Assign the old value 
                 emit($1->loc, $1->loc, "1", ADD);                           // Increment the value
             }
@@ -241,18 +248,18 @@ postfix_expression:
         | postfix_expression DECREMENT
         {
             $$ = new Expression();                                          // Create new expression
-            $$->loc = ST->gentemp(ST->lookup($1->loc)->type.type);          // Generate a new temporary variable
-            SymbolType t = ST->lookup($1->loc)->type;
+            $$->loc = SymTbl->gentemp(SymTbl->lookup($1->loc)->type.type);          // Generate a new temporary variable
+            SymbolType t = SymTbl->lookup($1->loc)->type;
             if(t.type == ARRAY) {
-                $$->loc = ST->gentemp(ST->lookup($1->loc)->type.baseType);
-                string temp = ST->gentemp(t.baseType);
+                $$->loc = SymTbl->gentemp(SymTbl->lookup($1->loc)->type.baseType);
+                string temp = SymTbl->gentemp(t.baseType);
                 emit(temp, $1->loc, *($1->folder), ARR_IDX_ARG);
                 emit($$->loc, temp, "", ASSIGN);
                 emit(temp, temp, "1", SUB);
                 emit($1->loc, temp, *($1->folder), ARR_IDX_RES);
             }
             else {
-                $$->loc = ST->gentemp(ST->lookup($1->loc)->type.type);
+                $$->loc = SymTbl->gentemp(SymTbl->lookup($1->loc)->type.type);
                 emit($$->loc, $1->loc, "", ASSIGN);                         // Assign the old value
                 emit($1->loc, $1->loc, "1", SUB);                           // Decrement the value
             }
@@ -268,7 +275,7 @@ argument_expression_list:
         {
             param* first = new param();                 // Create a new parameter
             first->name = $1->loc;
-            first->type = ST->lookup($1->loc)->type;
+            first->type = SymTbl->lookup($1->loc)->type;
             $$ = new vector<param*>;
             $$->push_back(first);                       // Add the parameter to the list
         }
@@ -276,7 +283,7 @@ argument_expression_list:
         {
             param* next = new param();                  // Create a new parameter
             next->name = $3->loc;
-            next->type = ST->lookup(next->name)->type;
+            next->type = SymTbl->lookup(next->name)->type;
             $$ = $1;
             $$->push_back(next);                        // Add the parameter to the list
         }
@@ -288,35 +295,35 @@ unary_expression:
         | INCREMENT unary_expression
         {
             $$ = new Expression();
-            SymbolType type = ST->lookup($2->loc)->type;
+            SymbolType type = SymTbl->lookup($2->loc)->type;
             if(type.type == ARRAY) {
-                string t = ST->gentemp(type.baseType);
+                string t = SymTbl->gentemp(type.baseType);
                 emit(t, $2->loc, *($2->folder), ARR_IDX_ARG);
                 emit(t, t, "1", ADD);
                 emit($2->loc, t, *($2->folder), ARR_IDX_RES);
-                $$->loc = ST->gentemp(ST->lookup($2->loc)->type.baseType);
+                $$->loc = SymTbl->gentemp(SymTbl->lookup($2->loc)->type.baseType);
             }
             else {
                 emit($2->loc, $2->loc, "1", ADD);                       // Increment the value
-                $$->loc = ST->gentemp(ST->lookup($2->loc)->type.type);
+                $$->loc = SymTbl->gentemp(SymTbl->lookup($2->loc)->type.type);
             }
-            $$->loc = ST->gentemp(ST->lookup($2->loc)->type.type);
+            $$->loc = SymTbl->gentemp(SymTbl->lookup($2->loc)->type.type);
             emit($$->loc, $2->loc, "", ASSIGN);                         // Assign the value
         }
         | DECREMENT unary_expression
         {
             $$ = new Expression();
-            SymbolType type = ST->lookup($2->loc)->type;
+            SymbolType type = SymTbl->lookup($2->loc)->type;
             if(type.type == ARRAY) {
-                string t = ST->gentemp(type.baseType);
+                string t = SymTbl->gentemp(type.baseType);
                 emit(t, $2->loc, *($2->folder), ARR_IDX_ARG);
                 emit(t, t, "1", SUB);
                 emit($2->loc, t, *($2->folder), ARR_IDX_RES);
-                $$->loc = ST->gentemp(ST->lookup($2->loc)->type.baseType);
+                $$->loc = SymTbl->gentemp(SymTbl->lookup($2->loc)->type.baseType);
             }
             else {
                 emit($2->loc, $2->loc, "1", SUB);                       // Decrement the value
-                $$->loc = ST->gentemp(ST->lookup($2->loc)->type.type);
+                $$->loc = SymTbl->gentemp(SymTbl->lookup($2->loc)->type.type);
             }
             emit($$->loc, $2->loc, "", ASSIGN);                         // Assign the value
         }
@@ -326,24 +333,24 @@ unary_expression:
             switch($1) {
                 case '&':   // Address
                     $$ = new Expression();
-                    $$->loc = ST->gentemp(POINTER);                 // Generate temporary of the same base type
+                    $$->loc = SymTbl->gentemp(POINTER);                 // Generate temporary of the same base type
                     emit($$->loc, $2->loc, "", REFERENCE);          // Emit the quad
                     break;
                 case '*':   // De-referencing
                     $$ = new Expression();
-                    $$->loc = ST->gentemp(INT);                     // Generate temporary of the same base type
+                    $$->loc = SymTbl->gentemp(INT);                     // Generate temporary of the same base type
                     $$->fold = 1;
                     $$->folder = new string($2->loc);
                     emit($$->loc, $2->loc, "", DEREFERENCE);        // Emit the quad
                     break;
                 case '-':   // Unary minus
                     $$ = new Expression();
-                    $$->loc = ST->gentemp();                        // Generate temporary of the same base type
+                    $$->loc = SymTbl->gentemp();                        // Generate temporary of the same base type
                     emit($$->loc, $2->loc, "", U_MINUS);            // Emit the quad
                     break;
                 case '!':   // Logical not 
                     $$ = new Expression();
-                    $$->loc = ST->gentemp(INT);                     // Generate temporary of the same base type
+                    $$->loc = SymTbl->gentemp(INT);                     // Generate temporary of the same base type
                     int temp = nextinstr + 2;
                     emit(to_string(temp), $2->loc, "0", GOTO_EQ);   // Emit the quads
                     temp = nextinstr + 3;
@@ -399,9 +406,9 @@ multiplicative_expression:
         cast_expression
         {
             $$ = new Expression();                                  // Generate new expression
-            SymbolType tp = ST->lookup($1->loc)->type;
+            SymbolType tp = SymTbl->lookup($1->loc)->type;
             if(tp.type == ARRAY) {                                  // If the type is an array
-                string t = ST->gentemp(tp.baseType);                // Generate a temporary
+                string t = SymTbl->gentemp(tp.baseType);                // Generate a temporary
                 if($1->folder != NULL) {
                     emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);   // Emit the necessary quad
                     $1->loc = t;
@@ -418,16 +425,16 @@ multiplicative_expression:
         {   
             // Indicates multiplication
             $$ = new Expression();
-            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            Symbol* one = SymTbl->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = SymTbl->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.baseType);
+                string t = SymTbl->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
                 $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.baseType);
+                string t = SymTbl->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
                 $1->type = one->type.baseType;
@@ -435,23 +442,23 @@ multiplicative_expression:
 
             // Assign the result of the multiplication to the higher data type
             DataType final = ((one->type.type > two->type.type) ? (one->type.type) : (two->type.type));
-            $$->loc = ST->gentemp(final);                       // Store the final result in a temporary
+            $$->loc = SymTbl->gentemp(final);                       // Store the final result in a temporary
             emit($$->loc, $1->loc, $3->loc, MULT);
         }
         | multiplicative_expression DIVIDE cast_expression
         {
             // Indicates division
             $$ = new Expression();
-            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            Symbol* one = SymTbl->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = SymTbl->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.baseType);
+                string t = SymTbl->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
                 $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.baseType);
+                string t = SymTbl->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
                 $1->type = one->type.baseType;
@@ -459,23 +466,23 @@ multiplicative_expression:
 
             // Assign the result of the division to the higher data type
             DataType final = ((one->type.type > two->type.type) ? (one->type.type) : (two->type.type));
-            $$->loc = ST->gentemp(final);                       // Store the final result in a temporary
+            $$->loc = SymTbl->gentemp(final);                       // Store the final result in a temporary
             emit($$->loc, $1->loc, $3->loc, DIV);
         }
         | multiplicative_expression MODULO cast_expression
         {
             // Indicates modulo
             $$ = new Expression();
-            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            Symbol* one = SymTbl->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = SymTbl->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.baseType);
+                string t = SymTbl->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
                 $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.baseType);
+                string t = SymTbl->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
                 $1->type = one->type.baseType;
@@ -483,7 +490,7 @@ multiplicative_expression:
 
             // Assign the result of the modulo to the higher data type
             DataType final = ((one->type.type > two->type.type) ? (one->type.type) : (two->type.type));
-            $$->loc = ST->gentemp(final);                       // Store the final result in a temporary
+            $$->loc = SymTbl->gentemp(final);                       // Store the final result in a temporary
             emit($$->loc, $1->loc, $3->loc, MOD);
         }
         ;
@@ -495,16 +502,16 @@ additive_expression:
         {   
             // Indicates addition
             $$ = new Expression();
-            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            Symbol* one = SymTbl->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = SymTbl->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.baseType);
+                string t = SymTbl->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
                 $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.baseType);
+                string t = SymTbl->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
                 $1->type = one->type.baseType;
@@ -512,23 +519,23 @@ additive_expression:
 
             // Assign the result of the addition to the higher data type
             DataType final = ((one->type.type > two->type.type) ? (one->type.type) : (two->type.type));
-            $$->loc = ST->gentemp(final);                       // Store the final result in a temporary
+            $$->loc = SymTbl->gentemp(final);                       // Store the final result in a temporary
             emit($$->loc, $1->loc, $3->loc, ADD);
         }
         | additive_expression SUBTRACT multiplicative_expression
         {
             // Indicates subtraction
             $$ = new Expression();
-            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            Symbol* one = SymTbl->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = SymTbl->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.baseType);
+                string t = SymTbl->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
                 $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.baseType);
+                string t = SymTbl->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
                 $1->type = one->type.baseType;
@@ -536,7 +543,7 @@ additive_expression:
 
             // Assign the result of the subtraction to the higher data type
             DataType final = ((one->type.type > two->type.type) ? (one->type.type) : (two->type.type));
-            $$->loc = ST->gentemp(final);                       // Store the final result in a temporary
+            $$->loc = SymTbl->gentemp(final);                       // Store the final result in a temporary
             emit($$->loc, $1->loc, $3->loc, SUB);
         }
         ;
@@ -548,42 +555,42 @@ shift_expression:
         {
             // Indicates left shift
             $$ = new Expression();
-            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            Symbol* one = SymTbl->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = SymTbl->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.baseType);
+                string t = SymTbl->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
                 $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.baseType);
+                string t = SymTbl->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
                 $1->type = one->type.baseType;
             }
-            $$->loc = ST->gentemp(one->type.type);              // Assign the result of the left shift to the data type of the left operand
+            $$->loc = SymTbl->gentemp(one->type.type);              // Assign the result of the left shift to the data type of the left operand
             emit($$->loc, $1->loc, $3->loc, SL);
         }
         | shift_expression RIGHT_SHIFT additive_expression
         {
             // Indicates right shift
             $$ = new Expression();
-            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            Symbol* one = SymTbl->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = SymTbl->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.baseType);
+                string t = SymTbl->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
                 $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.baseType);
+                string t = SymTbl->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
                 $1->type = one->type.baseType;
             }
-            $$->loc = ST->gentemp(one->type.type);              // Assign the result of the right shift to the data type of the left operand
+            $$->loc = SymTbl->gentemp(one->type.type);              // Assign the result of the right shift to the data type of the left operand
             emit($$->loc, $1->loc, $3->loc, SR);
         }
         ;
@@ -594,22 +601,22 @@ relational_expression:
         | relational_expression LESS_THAN shift_expression
         {
             $$ = new Expression();
-            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            Symbol* one = SymTbl->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = SymTbl->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.baseType);
+                string t = SymTbl->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
                 $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.baseType);
+                string t = SymTbl->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
                 $1->type = one->type.baseType;
             }
             $$ = new Expression();
-            $$->loc = ST->gentemp();
+            $$->loc = SymTbl->gentemp();
             $$->type = BOOL;                                    // Assign the result of the relational expression to a boolean
             emit($$->loc, "1", "", ASSIGN);
             $$->truelist = makelist(nextinstr);                 // Set the truelist to the next instruction
@@ -621,22 +628,22 @@ relational_expression:
         | relational_expression GREATER_THAN shift_expression
         {
             $$ = new Expression();
-            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            Symbol* one = SymTbl->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = SymTbl->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.baseType);
+                string t = SymTbl->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
                 $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.baseType);
+                string t = SymTbl->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
                 $1->type = one->type.baseType;
             }
             $$ = new Expression();
-            $$->loc = ST->gentemp();
+            $$->loc = SymTbl->gentemp();
             $$->type = BOOL;                                    // Assign the result of the relational expression to a boolean
             emit($$->loc, "1", "", ASSIGN);
             $$->truelist = makelist(nextinstr);                 // Set the truelist to the next instruction
@@ -648,22 +655,22 @@ relational_expression:
         | relational_expression LESS_THAN_EQUALS shift_expression
         {
             $$ = new Expression();
-            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            Symbol* one = SymTbl->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = SymTbl->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.baseType);
+                string t = SymTbl->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
                 $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.baseType);
+                string t = SymTbl->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
                 $1->type = one->type.baseType;
             }
             $$ = new Expression();
-            $$->loc = ST->gentemp();
+            $$->loc = SymTbl->gentemp();
             $$->type = BOOL;                                    // Assign the result of the relational expression to a boolean
             emit($$->loc, "1", "", ASSIGN);
             $$->truelist = makelist(nextinstr);                 // Set the truelist to the next instruction
@@ -675,22 +682,22 @@ relational_expression:
         | relational_expression GREATER_THAN_EQUALS shift_expression
         {
             $$ = new Expression();
-            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            Symbol* one = SymTbl->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = SymTbl->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.baseType);
+                string t = SymTbl->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
                 $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.baseType);
+                string t = SymTbl->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
                 $1->type = one->type.baseType;
             }
             $$ = new Expression();
-            $$->loc = ST->gentemp();
+            $$->loc = SymTbl->gentemp();
             $$->type = BOOL;                                    // Assign the result of the relational expression to a boolean
             emit($$->loc, "1", "", ASSIGN);
             $$->truelist = makelist(nextinstr);                 // Set the truelist to the next instruction
@@ -710,22 +717,22 @@ equality_expression:
         | equality_expression EQUALS relational_expression
         {
             $$ = new Expression();
-            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            Symbol* one = SymTbl->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = SymTbl->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.baseType);
+                string t = SymTbl->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
                 $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.baseType);
+                string t = SymTbl->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
                 $1->type = one->type.baseType;
             }
             $$ = new Expression();
-            $$->loc = ST->gentemp();
+            $$->loc = SymTbl->gentemp();
             $$->type = BOOL;                                    // Assign the result of the relational expression to a boolean
             emit($$->loc, "1", "", ASSIGN);
             $$->truelist = makelist(nextinstr);                 // Set the truelist to the next instruction
@@ -737,22 +744,22 @@ equality_expression:
         | equality_expression NOT_EQUALS relational_expression
         {
             $$ = new Expression();
-            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            Symbol* one = SymTbl->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = SymTbl->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.baseType);
+                string t = SymTbl->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
                 $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.baseType);
+                string t = SymTbl->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
                 $1->type = one->type.baseType;
             }
             $$ = new Expression();
-            $$->loc = ST->gentemp();
+            $$->loc = SymTbl->gentemp();
             $$->type = BOOL;                                    // Assign the result of the relational expression to a boolean
             emit($$->loc, "1", "", ASSIGN);
             $$->truelist = makelist(nextinstr);                 // Set the truelist to the next instruction
@@ -769,22 +776,22 @@ and_expression:
         | and_expression BITWISE_AND equality_expression
         {
             $$ = new Expression();
-            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            Symbol* one = SymTbl->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = SymTbl->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.baseType);
+                string t = SymTbl->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
                 $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.baseType);
+                string t = SymTbl->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
                 $1->type = one->type.baseType;
             }
             $$ = new Expression();
-            $$->loc = ST->gentemp();                            // Create a temporary variable to store the result
+            $$->loc = SymTbl->gentemp();                            // Create a temporary variable to store the result
             emit($$->loc, $1->loc, $3->loc, BW_AND);            // Emit the quad
         }
         ;
@@ -797,22 +804,22 @@ exclusive_or_expression:
         | exclusive_or_expression BITWISE_XOR and_expression
         {
             $$ = new Expression();
-            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            Symbol* one = SymTbl->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = SymTbl->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.baseType);
+                string t = SymTbl->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
                 $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.baseType);
+                string t = SymTbl->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
                 $1->type = one->type.baseType;
             }
             $$ = new Expression();
-            $$->loc = ST->gentemp();                            // Create a temporary variable to store the result
+            $$->loc = SymTbl->gentemp();                            // Create a temporary variable to store the result
             emit($$->loc, $1->loc, $3->loc, BW_XOR);            // Emit the quad
         }
         ;
@@ -826,22 +833,22 @@ inclusive_or_expression:
         | inclusive_or_expression BITWISE_OR exclusive_or_expression
         {
             $$ = new Expression();
-            Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
-            Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
+            Symbol* one = SymTbl->lookup($1->loc);                  // Get the first operand from the symbol table
+            Symbol* two = SymTbl->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.baseType);
+                string t = SymTbl->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
                 $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.baseType);
+                string t = SymTbl->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
                 $1->type = one->type.baseType;
             }
             $$ = new Expression();
-            $$->loc = ST->gentemp();                            // Create a temporary variable to store the result
+            $$->loc = SymTbl->gentemp();                            // Create a temporary variable to store the result
             emit($$->loc, $1->loc, $3->loc, BW_OR);             // Emit the quad
         }
         ;
@@ -883,8 +890,8 @@ conditional_expression:
             /*
                 Note the augmented grammar with the non-terminals M and N
             */
-            Symbol* one = ST->lookup($5->loc);
-            $$->loc = ST->gentemp(one->type.type);      // Create a temporary for the expression
+            Symbol* one = SymTbl->lookup($5->loc);
+            $$->loc = SymTbl->gentemp(one->type.type);      // Create a temporary for the expression
             $$->type = one->type.type;
             emit($$->loc, $9->loc, "", ASSIGN);         // Assign the conditional expression
             list<int> temp = makelist(nextinstr);
@@ -923,8 +930,8 @@ assignment_expression:
         {}
         | unary_expression assignment_operator assignment_expression
         {
-            Symbol* sym1 = ST->lookup($1->loc);         // Get the first operand from the symbol table
-            Symbol* sym2 = ST->lookup($3->loc);         // Get the second operand from the symbol table
+            Symbol* sym1 = SymTbl->lookup($1->loc);         // Get the first operand from the symbol table
+            Symbol* sym2 = SymTbl->lookup($3->loc);         // Get the second operand from the symbol table
             if($1->fold == 0) {
                 if(sym1->type.type != ARRAY)
                     emit($1->loc, $3->loc, "", ASSIGN);
@@ -990,16 +997,16 @@ declaration:
             for(vector<declaration*>::iterator it = decs.begin(); it != decs.end(); it++) {
                 declaration* currDec = *it;
                 if(currDec->type == FUNCTION) {
-                    ST = &globalST;
+                    SymTbl = &SymTbl_Global;
                     emit(currDec->name, "", "", FUNC_END);
-                    Symbol* one = ST->lookup(currDec->name);        // Create an entry for the function
+                    Symbol* one = SymTbl->lookup(currDec->name);        // Create an entry for the function
                     Symbol* two = one->nestedTable->lookup("RETVAL", currType, currDec->pointers);
                     one->size = 0;
                     one->initVal = NULL;
                     continue;
                 }
 
-                Symbol* three = ST->lookup(currDec->name, currType);        // Create an entry for the variable in the symbol table
+                Symbol* three = SymTbl->lookup(currDec->name, currType);        // Create an entry for the variable in the symbol table
                 three->nestedTable = NULL;
                 if(currDec->li == vector<int>() && currDec->pointers == 0) {
                     three->type.type = currType;
@@ -1007,7 +1014,7 @@ declaration:
                     if(currDec->initVal != NULL) {
                         string rval = currDec->initVal->loc;
                         emit(three->name, rval, "", ASSIGN);
-                        three->initVal = ST->lookup(rval)->initVal;
+                        three->initVal = SymTbl->lookup(rval)->initVal;
                     }
                     else
                         three->initVal = NULL;
@@ -1020,15 +1027,15 @@ declaration:
                     int sz = currSize;
                     for(int i = 0; i < (int)temp.size(); i++)
                         sz *= temp[i];
-                    ST->offset += sz;
+                    SymTbl->offset += sz;
                     three->size = sz;
-                    ST->offset -= 4;
+                    SymTbl->offset -= 4;
                 }
                 else if(currDec->pointers != 0) {               // Handle pointer types
                     three->type.type = POINTER;
                     three->type.baseType = currType;
                     three->type.pointers = currDec->pointers;
-                    ST->offset += (_SIZE_POINTER - currSize);
+                    SymTbl->offset += (_SIZE_POINTER - currSize);
                     three->size = _SIZE_POINTER;
                 }
             }
@@ -1216,7 +1223,7 @@ direct_declarator:
             $1->type = ARRAY;       // Array type
             $1->nextType = INT;     // Array of ints
             $$ = $1;
-            int index = ST->lookup($4->loc)->initVal->i;
+            int index = SymTbl->lookup($4->loc)->initVal->i;
             $$->li.push_back(index);
         }
         | direct_declarator LEFT_SQR_BRACKET STATIC type_qualifier_list assignment_expression RIGHT_SQR_BRACKET
@@ -1233,7 +1240,7 @@ direct_declarator:
         {
             $$ = $1;
             $$->type = FUNCTION;    // Function type
-            Symbol* funcData = ST->lookup($$->name, $$->type);
+            Symbol* funcData = SymTbl->lookup($$->name, $$->type);
             SymbolTable* funcTable = new SymbolTable();
             funcData->nestedTable = funcTable;
             vector<param*> paramList = *($3);   // Get the parameter list
@@ -1252,7 +1259,7 @@ direct_declarator:
                 else                                        // If the parameter is a anything other than an array or a pointer
                     funcTable->lookup(curParam->name, curParam->type.type);
             }
-            ST = funcTable;         // Set the pointer to the symbol table to the function's symbol table
+            SymTbl = funcTable;         // Set the pointer to the symbol table to the function's symbol table
             emit($$->name, "", "", FUNC_BEG);
         }
         | direct_declarator LEFT_PAREN identifier_list RIGHT_PAREN
@@ -1539,14 +1546,14 @@ jump_statement:
         {}
         | RETURN_ SEMICOLON
         {
-            if(ST->lookup("RETVAL")->type.type == VOID) {
+            if(SymTbl->lookup("RETVAL")->type.type == VOID) {
                 emit("", "", "", RETURN);           // Emit the quad when return type is void
             }
             $$ = new Expression();
         }
         | RETURN_ expression SEMICOLON
         {
-            if(ST->lookup("RETVAL")->type.type == ST->lookup($2->loc)->type.type) {
+            if(SymTbl->lookup("RETVAL")->type.type == SymTbl->lookup($2->loc)->type.type) {
                 emit($2->loc, "", "", RETURN);      // Emit the quad when return type is not void
             }
             $$ = new Expression();
@@ -1572,7 +1579,7 @@ function_definition:
         {}
         | function_prototype compound_statement
         {
-            ST = &globalST;                     // Reset the symbol table to global symbol table
+            SymTbl = &SymTbl_Global;                     // Reset the symbol table to global symbol table
             emit($1->name, "", "", FUNC_END);
         }
         ;
@@ -1589,7 +1596,7 @@ function_prototype:
             if(currType == FLOAT)
                 currSize = _SIZE_FLOAT;
             declaration* currDec = $2;
-            Symbol* sym = globalST.lookup(currDec->name);
+            Symbol* sym = SymTbl_Global.lookup(currDec->name);
             if(currDec->type == FUNCTION) {
                 Symbol* retval = sym->nestedTable->lookup("RETVAL", currType, currDec->pointers);   // Create entry for return value
                 sym->size = 0;

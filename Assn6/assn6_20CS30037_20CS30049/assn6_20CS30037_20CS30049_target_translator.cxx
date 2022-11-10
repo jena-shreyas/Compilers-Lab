@@ -5,8 +5,8 @@
 using namespace std;
 
 // External variables
-extern SymbolTable globalST;
-extern SymbolTable *ST;
+extern SymbolTable SymTbl_Global;
+extern SymbolTable *SymTbl;
 extern QuadArray QuadList;
 
 // Declare global variables
@@ -20,7 +20,7 @@ string asmFileName;
 // Prints the global information to the assembly file
 void printGlobal(ofstream &sfile)
 {
-    for (vector<Symbol *>::iterator it = globalST.symbols.begin(); it != globalST.symbols.end(); it++)
+    for (vector<Symbol *>::iterator it = SymTbl_Global.symbols.begin(); it != SymTbl_Global.symbols.end(); it++)
     {
         Symbol *sym = *it;
         if (sym->type.type == CHAR && sym->name[0] != 't')
@@ -111,14 +111,14 @@ void quadCode(Quad q, ofstream &sfile)
     string toPrint1 = "", toPrint2 = "", toPrintRes = "";
     int off1 = 0, off2 = 0, offRes = 0;
 
-    Symbol *loc1 = ST->lookup(q.arg1);
-    Symbol *loc2 = ST->lookup(q.arg2);
-    Symbol *loc3 = ST->lookup(q.result);
-    Symbol *glb1 = globalST.searchGlobal(q.arg1);
-    Symbol *glb2 = globalST.searchGlobal(q.arg2);
-    Symbol *glb3 = globalST.searchGlobal(q.result);
+    Symbol *loc1 = SymTbl->lookup(q.arg1);
+    Symbol *loc2 = SymTbl->lookup(q.arg2);
+    Symbol *loc3 = SymTbl->lookup(q.result);
+    Symbol *glb1 = SymTbl_Global.searchGlobal(q.arg1);
+    Symbol *glb2 = SymTbl_Global.searchGlobal(q.arg2);
+    Symbol *glb3 = SymTbl_Global.searchGlobal(q.result);
 
-    if (ST != &globalST)
+    if (SymTbl != &SymTbl_Global)
     {
         if (glb1 == NULL)
             off1 = loc1->offset;
@@ -548,10 +548,10 @@ void generateTargetCode(ofstream &sfile)
             else
                 continue;
 
-            currFunc = globalST.searchGlobal(QuadList.quads[i].result);
+            currFunc = SymTbl_Global.searchGlobal(QuadList.quads[i].result);
             currFuncTable = currFunc->nestedTable;
             int takingParam = 1, memBind = 16;
-            ST = currFuncTable;
+            SymTbl = currFuncTable;
             
             for (int j = 0; j < (int)currFuncTable->symbols.size(); j++)
             {
@@ -588,7 +588,7 @@ void generateTargetCode(ofstream &sfile)
         // Function epilogue (while leaving a function)
         else if (QuadList.quads[i].op == FUNC_END)
         {
-            ST = &globalST;
+            SymTbl = &SymTbl_Global;
             funcRunning = "";
             sfile << "\tleave" << endl;
             sfile << "\tret" << endl;
@@ -602,7 +602,7 @@ void generateTargetCode(ofstream &sfile)
 
 int main(int argc, char *argv[])
 {
-    ST = &globalST;
+    SymTbl = &SymTbl_Global;
     yyparse();
 
     asmFileName = "assn6_20CS30037_20CS30049_" + string(argv[argc - 1]) + ".s";
@@ -611,9 +611,9 @@ int main(int argc, char *argv[])
 
     QuadList.print(); // Print the three address quads
 
-    ST->print("ST.global"); // Print the symbol tables
+    SymTbl->print("SymTbl.global"); // Print the symbol tables
 
-    ST = &globalST;
+    SymTbl = &SymTbl_Global;
 
     generateTargetCode(sfile); // Generate the target assembly code
 

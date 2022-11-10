@@ -58,9 +58,14 @@ class SymbolTable;   // SymbolTable class represents the symbol table data struc
 class Quad;          // An instance of Quad class represents a quadruple used in TAC generation
 class QuadArray;     // represents the list of quads 
 
+extern QuadArray QuadList;
+extern SymbolTable SymTbl_Global;
+extern SymbolTable* SymTbl;
+
 extern char* yytext;   // import the yytext variable (which stores the lexeme) from the lexer
 extern int yyparse();  // import the yyparse() function from bison parser
 
+// ##################### Class definitions and member functions ##################
 
 // class to represent symbol type
 class SymbolType {
@@ -99,7 +104,6 @@ class SymbolValue {
         void setInit(float val);
 
 };
-
 
 /*
     Class to represent an element(entry) in the symbol table
@@ -164,9 +168,10 @@ class SymbolTable {
         static int tempCount;
 
         SymbolTable();
+
         Symbol* lookup(string name, DataType t = INT, int pc = 0);
-        Symbol* searchGlobal(string name);
         string gentemp(DataType t = INT);
+        Symbol* searchGlobal(string name);
 
         void print(string tableName);
 

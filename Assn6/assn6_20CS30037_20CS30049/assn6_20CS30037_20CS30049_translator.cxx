@@ -5,13 +5,12 @@ using namespace std;
 // Initialize the global variables
 int nextinstr = 0;
 
+QuadArray QuadList;
+SymbolTable SymTbl_Global;
+SymbolTable* SymTbl;
+
 // Intiailize the static variables
 int SymbolTable::tempCount = 0;
-
-QuadArray QuadList;
-SymbolTable globalST;
-SymbolTable* ST;
-
 
 // Implementations of constructors and functions for the SymbolValue class
 void SymbolValue::setInit(int val) {
