@@ -8,23 +8,23 @@ int nextinstr = 0;
 // Intiailize the static variables
 int SymbolTable::tempCount = 0;
 
-quadArray quadList;
+QuadArray QuadList;
 SymbolTable globalST;
 SymbolTable* ST;
 
 
 // Implementations of constructors and functions for the SymbolValue class
-void SymbolValue::setInitVal(int val) {
+void SymbolValue::setInit(int val) {
     c = f = i = val;
     p = NULL;
 }
 
-void SymbolValue::setInitVal(char val) {
+void SymbolValue::setInit(char val) {
     c = f = i = val;
     p = NULL;
 }
 
-void SymbolValue::setInitVal(float val) {
+void SymbolValue::setInit(float val) {
     c = f = i = val;
     p = NULL;
 }
@@ -51,7 +51,7 @@ Symbol* SymbolTable::lookup(string name, DataType t, int pc) {
         }
         else {
             sym->size = _SIZE_POINTER;
-            sym->type.nextType = t;
+            sym->type.baseType = t;
             sym->type.pointers = pc;
             sym->type.type = ARRAY;
         }
@@ -141,10 +141,10 @@ void SymbolTable::print(string tableName) {
 }
 
 
-// Implementations of constructors and functions for the quad class
-quad::quad(string res_, string arg1_, string arg2_, opcode op_): op(op_), arg1(arg1_), arg2(arg2_), result(res_) {}
+// Implementations of constructors and functions for the Quad class
+Quad::Quad(string res_, string arg1_, string arg2_, opcode op_): op(op_), arg1(arg1_), arg2(arg2_), result(res_) {}
 
-string quad::print() {
+string Quad::print() {
     string out = "";
     if(op >= ADD && op <= BW_XOR) {                 // Binary operators
         out += (result + " = " + arg1 + " ");
@@ -230,8 +230,8 @@ string quad::print() {
 }
 
 
-// Implementations of constructors and functions for the quadArray class
-void quadArray::print() {
+// Implementations of constructors and functions for the QuadArray class
+void QuadArray::print() {
     for(int i = 0; i < 120; i++)
         cout << '-';
     cout << endl;
@@ -260,26 +260,26 @@ Expression::Expression(): fold(0), folder(NULL) {}
 
 // Overloaded emit functions
 void emit(string result, string arg1, string arg2, opcode op) {
-    quad q(result, arg1, arg2, op);
-    quadList.quads.push_back(q);
+    Quad q(result, arg1, arg2, op);
+    QuadList.quads.push_back(q);
     nextinstr++;
 }
 
 void emit(string result, int constant, opcode op) {
-    quad q(result, to_string(constant), "", op);
-    quadList.quads.push_back(q);
+    Quad q(result, to_string(constant), "", op);
+    QuadList.quads.push_back(q);
     nextinstr++;
 }
 
 void emit(string result, char constant, opcode op) {
-    quad q(result, to_string(constant), "", op);
-    quadList.quads.push_back(q);
+    Quad q(result, to_string(constant), "", op);
+    QuadList.quads.push_back(q);
     nextinstr++;
 }
 
 void emit(string result, float constant, opcode op) {
-    quad q(result, to_string(constant), "", op);
-    quadList.quads.push_back(q);
+    Quad q(result, to_string(constant), "", op);
+    QuadList.quads.push_back(q);
     nextinstr++;
 }
 
@@ -300,7 +300,7 @@ list<int> merge(list<int> list1, list<int> list2) {
 void backpatch(list<int> l, int address) {
     string str = to_string(address);
     for(list<int>::iterator it = l.begin(); it != l.end(); it++) {
-        quadList.quads[*it].result = str;
+        QuadList.quads[*it].result = str;
     }
 }
 
@@ -398,11 +398,11 @@ string checkType(SymbolType t) {
 
     else if(t.type == POINTER) {        // Depending on type of pointer
         string tp = "";
-        if(t.nextType == CHAR)
+        if(t.baseType == CHAR)
             tp += "char";
-        else if(t.nextType == INT)
+        else if(t.baseType == INT)
             tp += "int";
-        else if(t.nextType == FLOAT)
+        else if(t.baseType == FLOAT)
             tp += "float";
         tp += string(t.pointers, '*');
         return tp;
@@ -410,11 +410,11 @@ string checkType(SymbolType t) {
 
     else if(t.type == ARRAY) {          // Depending on type of array
         string tp = "";
-        if(t.nextType == CHAR)
+        if(t.baseType == CHAR)
             tp += "char";
-        else if(t.nextType == INT)
+        else if(t.baseType == INT)
             tp += "int";
-        else if(t.nextType == FLOAT)
+        else if(t.baseType == FLOAT)
             tp += "float";
         vector<int> dim = t.dims;
         for(int i = 0; i < (int)dim.size(); i++) {

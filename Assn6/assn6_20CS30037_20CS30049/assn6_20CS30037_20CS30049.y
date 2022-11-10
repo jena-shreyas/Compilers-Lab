@@ -10,7 +10,7 @@
     extern int yylineno;                    // Used for keeping track of the line number
 
     extern int nextinstr;                   // Used for keeping track of the next instruction
-    extern quadArray quadList;              // List of all quads
+    extern QuadArray quadList;              // List of all quads
     extern SymbolTable globalST;            // Global symbol table
     extern SymbolTable* ST;                 // Pointer to the current symbol table
     extern vector<string> stringConsts;     // List of all string constants
@@ -136,7 +136,7 @@ primary_expression:
             $$->loc = ST->gentemp(INT);             // Generate a new temporary variable
             emit($$->loc, $1, ASSIGN);
             SymbolValue* val = new SymbolValue();
-            val->setInitVal($1);                    // Set the initial value
+            val->setInit($1);                    // Set the initial value
             ST->lookup($$->loc)->initVal = val;     // Store in symbol table
         }
         | FLOAT_CONSTANT
@@ -145,7 +145,7 @@ primary_expression:
             $$->loc = ST->gentemp(FLOAT);           // Generate a new temporary variable
             emit($$->loc, $1, ASSIGN);
             SymbolValue* val = new SymbolValue();
-            val->setInitVal($1);                    // Set the initial value
+            val->setInit($1);                    // Set the initial value
             ST->lookup($$->loc)->initVal = val;     // Store in symbol table
         }
         | CHAR_CONSTANT
@@ -154,7 +154,7 @@ primary_expression:
             $$->loc = ST->gentemp(CHAR);            // Generate a new temporary variable
             emit($$->loc, $1, ASSIGN);
             SymbolValue* val = new SymbolValue();
-            val->setInitVal($1);                    // Set the initial value
+            val->setInit($1);                    // Set the initial value
             ST->lookup($$->loc)->initVal = val;     // Store in symbol table
         }
         | STRING_LITERAL
@@ -225,9 +225,9 @@ postfix_expression:
             $$ = new Expression();                                          // Create new expression
             SymbolType t = ST->lookup($1->loc)->type;                       // Get the type of the expression and generate a temporary variable
             if(t.type == ARRAY) {
-                $$->loc = ST->gentemp(ST->lookup($1->loc)->type.nextType);
+                $$->loc = ST->gentemp(ST->lookup($1->loc)->type.baseType);
                 emit($$->loc, $1->loc, *($1->folder), ARR_IDX_ARG);
-                string temp = ST->gentemp(t.nextType);
+                string temp = ST->gentemp(t.baseType);
                 emit(temp, $1->loc, *($1->folder), ARR_IDX_ARG);
                 emit(temp, temp, "1", ADD);
                 emit($1->loc, temp, *($1->folder), ARR_IDX_RES);
@@ -244,8 +244,8 @@ postfix_expression:
             $$->loc = ST->gentemp(ST->lookup($1->loc)->type.type);          // Generate a new temporary variable
             SymbolType t = ST->lookup($1->loc)->type;
             if(t.type == ARRAY) {
-                $$->loc = ST->gentemp(ST->lookup($1->loc)->type.nextType);
-                string temp = ST->gentemp(t.nextType);
+                $$->loc = ST->gentemp(ST->lookup($1->loc)->type.baseType);
+                string temp = ST->gentemp(t.baseType);
                 emit(temp, $1->loc, *($1->folder), ARR_IDX_ARG);
                 emit($$->loc, temp, "", ASSIGN);
                 emit(temp, temp, "1", SUB);
@@ -290,11 +290,11 @@ unary_expression:
             $$ = new Expression();
             SymbolType type = ST->lookup($2->loc)->type;
             if(type.type == ARRAY) {
-                string t = ST->gentemp(type.nextType);
+                string t = ST->gentemp(type.baseType);
                 emit(t, $2->loc, *($2->folder), ARR_IDX_ARG);
                 emit(t, t, "1", ADD);
                 emit($2->loc, t, *($2->folder), ARR_IDX_RES);
-                $$->loc = ST->gentemp(ST->lookup($2->loc)->type.nextType);
+                $$->loc = ST->gentemp(ST->lookup($2->loc)->type.baseType);
             }
             else {
                 emit($2->loc, $2->loc, "1", ADD);                       // Increment the value
@@ -308,11 +308,11 @@ unary_expression:
             $$ = new Expression();
             SymbolType type = ST->lookup($2->loc)->type;
             if(type.type == ARRAY) {
-                string t = ST->gentemp(type.nextType);
+                string t = ST->gentemp(type.baseType);
                 emit(t, $2->loc, *($2->folder), ARR_IDX_ARG);
                 emit(t, t, "1", SUB);
                 emit($2->loc, t, *($2->folder), ARR_IDX_RES);
-                $$->loc = ST->gentemp(ST->lookup($2->loc)->type.nextType);
+                $$->loc = ST->gentemp(ST->lookup($2->loc)->type.baseType);
             }
             else {
                 emit($2->loc, $2->loc, "1", SUB);                       // Decrement the value
@@ -401,11 +401,11 @@ multiplicative_expression:
             $$ = new Expression();                                  // Generate new expression
             SymbolType tp = ST->lookup($1->loc)->type;
             if(tp.type == ARRAY) {                                  // If the type is an array
-                string t = ST->gentemp(tp.nextType);                // Generate a temporary
+                string t = ST->gentemp(tp.baseType);                // Generate a temporary
                 if($1->folder != NULL) {
                     emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);   // Emit the necessary quad
                     $1->loc = t;
-                    $1->type = tp.nextType;
+                    $1->type = tp.baseType;
                     $$ = $1;
                 }
                 else
@@ -421,16 +421,16 @@ multiplicative_expression:
             Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
             Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.nextType);
+                string t = ST->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
-                $3->type = two->type.nextType;
+                $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.nextType);
+                string t = ST->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
-                $1->type = one->type.nextType;
+                $1->type = one->type.baseType;
             }
 
             // Assign the result of the multiplication to the higher data type
@@ -445,16 +445,16 @@ multiplicative_expression:
             Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
             Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.nextType);
+                string t = ST->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
-                $3->type = two->type.nextType;
+                $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.nextType);
+                string t = ST->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
-                $1->type = one->type.nextType;
+                $1->type = one->type.baseType;
             }
 
             // Assign the result of the division to the higher data type
@@ -469,16 +469,16 @@ multiplicative_expression:
             Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
             Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.nextType);
+                string t = ST->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
-                $3->type = two->type.nextType;
+                $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.nextType);
+                string t = ST->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
-                $1->type = one->type.nextType;
+                $1->type = one->type.baseType;
             }
 
             // Assign the result of the modulo to the higher data type
@@ -498,16 +498,16 @@ additive_expression:
             Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
             Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.nextType);
+                string t = ST->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
-                $3->type = two->type.nextType;
+                $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.nextType);
+                string t = ST->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
-                $1->type = one->type.nextType;
+                $1->type = one->type.baseType;
             }
 
             // Assign the result of the addition to the higher data type
@@ -522,16 +522,16 @@ additive_expression:
             Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
             Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.nextType);
+                string t = ST->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
-                $3->type = two->type.nextType;
+                $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.nextType);
+                string t = ST->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
-                $1->type = one->type.nextType;
+                $1->type = one->type.baseType;
             }
 
             // Assign the result of the subtraction to the higher data type
@@ -551,16 +551,16 @@ shift_expression:
             Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
             Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.nextType);
+                string t = ST->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
-                $3->type = two->type.nextType;
+                $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.nextType);
+                string t = ST->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
-                $1->type = one->type.nextType;
+                $1->type = one->type.baseType;
             }
             $$->loc = ST->gentemp(one->type.type);              // Assign the result of the left shift to the data type of the left operand
             emit($$->loc, $1->loc, $3->loc, SL);
@@ -572,16 +572,16 @@ shift_expression:
             Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
             Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.nextType);
+                string t = ST->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
-                $3->type = two->type.nextType;
+                $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.nextType);
+                string t = ST->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
-                $1->type = one->type.nextType;
+                $1->type = one->type.baseType;
             }
             $$->loc = ST->gentemp(one->type.type);              // Assign the result of the right shift to the data type of the left operand
             emit($$->loc, $1->loc, $3->loc, SR);
@@ -597,16 +597,16 @@ relational_expression:
             Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
             Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.nextType);
+                string t = ST->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
-                $3->type = two->type.nextType;
+                $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.nextType);
+                string t = ST->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
-                $1->type = one->type.nextType;
+                $1->type = one->type.baseType;
             }
             $$ = new Expression();
             $$->loc = ST->gentemp();
@@ -624,16 +624,16 @@ relational_expression:
             Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
             Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.nextType);
+                string t = ST->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
-                $3->type = two->type.nextType;
+                $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.nextType);
+                string t = ST->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
-                $1->type = one->type.nextType;
+                $1->type = one->type.baseType;
             }
             $$ = new Expression();
             $$->loc = ST->gentemp();
@@ -651,16 +651,16 @@ relational_expression:
             Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
             Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.nextType);
+                string t = ST->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
-                $3->type = two->type.nextType;
+                $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.nextType);
+                string t = ST->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
-                $1->type = one->type.nextType;
+                $1->type = one->type.baseType;
             }
             $$ = new Expression();
             $$->loc = ST->gentemp();
@@ -678,16 +678,16 @@ relational_expression:
             Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
             Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.nextType);
+                string t = ST->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
-                $3->type = two->type.nextType;
+                $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.nextType);
+                string t = ST->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
-                $1->type = one->type.nextType;
+                $1->type = one->type.baseType;
             }
             $$ = new Expression();
             $$->loc = ST->gentemp();
@@ -713,16 +713,16 @@ equality_expression:
             Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
             Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.nextType);
+                string t = ST->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
-                $3->type = two->type.nextType;
+                $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.nextType);
+                string t = ST->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
-                $1->type = one->type.nextType;
+                $1->type = one->type.baseType;
             }
             $$ = new Expression();
             $$->loc = ST->gentemp();
@@ -740,16 +740,16 @@ equality_expression:
             Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
             Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.nextType);
+                string t = ST->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
-                $3->type = two->type.nextType;
+                $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.nextType);
+                string t = ST->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
-                $1->type = one->type.nextType;
+                $1->type = one->type.baseType;
             }
             $$ = new Expression();
             $$->loc = ST->gentemp();
@@ -772,16 +772,16 @@ and_expression:
             Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
             Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.nextType);
+                string t = ST->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
-                $3->type = two->type.nextType;
+                $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.nextType);
+                string t = ST->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
-                $1->type = one->type.nextType;
+                $1->type = one->type.baseType;
             }
             $$ = new Expression();
             $$->loc = ST->gentemp();                            // Create a temporary variable to store the result
@@ -800,16 +800,16 @@ exclusive_or_expression:
             Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
             Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.nextType);
+                string t = ST->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
-                $3->type = two->type.nextType;
+                $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.nextType);
+                string t = ST->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
-                $1->type = one->type.nextType;
+                $1->type = one->type.baseType;
             }
             $$ = new Expression();
             $$->loc = ST->gentemp();                            // Create a temporary variable to store the result
@@ -829,16 +829,16 @@ inclusive_or_expression:
             Symbol* one = ST->lookup($1->loc);                  // Get the first operand from the symbol table
             Symbol* two = ST->lookup($3->loc);                  // Get the second operand from the symbol table
             if(two->type.type == ARRAY) {                       // If the second operand is an array, perform necessary operations
-                string t = ST->gentemp(two->type.nextType);
+                string t = ST->gentemp(two->type.baseType);
                 emit(t, $3->loc, *($3->folder), ARR_IDX_ARG);
                 $3->loc = t;
-                $3->type = two->type.nextType;
+                $3->type = two->type.baseType;
             }
             if(one->type.type == ARRAY) {                       // If the first operand is an array, perform necessary operations
-                string t = ST->gentemp(one->type.nextType);
+                string t = ST->gentemp(one->type.baseType);
                 emit(t, $1->loc, *($1->folder), ARR_IDX_ARG);
                 $1->loc = t;
-                $1->type = one->type.nextType;
+                $1->type = one->type.baseType;
             }
             $$ = new Expression();
             $$->loc = ST->gentemp();                            // Create a temporary variable to store the result
@@ -1014,7 +1014,7 @@ declaration:
                 }
                 else if(currDec->li != vector<int>()) {         // Handle array types
                     three->type.type = ARRAY;
-                    three->type.nextType = currType;
+                    three->type.baseType = currType;
                     three->type.dims = currDec->li;
                     vector<int> temp = three->type.dims;
                     int sz = currSize;
@@ -1026,7 +1026,7 @@ declaration:
                 }
                 else if(currDec->pointers != 0) {               // Handle pointer types
                     three->type.type = POINTER;
-                    three->type.nextType = currType;
+                    three->type.baseType = currType;
                     three->type.pointers = currDec->pointers;
                     ST->offset += (_SIZE_POINTER - currSize);
                     three->size = _SIZE_POINTER;
@@ -1241,12 +1241,12 @@ direct_declarator:
                 param* curParam = paramList[i];
                 if(curParam->type.type == ARRAY) {          // If the parameter is an array
                     funcTable->lookup(curParam->name, curParam->type.type);
-                    funcTable->lookup(curParam->name)->type.nextType = INT;
+                    funcTable->lookup(curParam->name)->type.baseType = INT;
                     funcTable->lookup(curParam->name)->type.dims.push_back(0);
                 }
                 else if(curParam->type.type == POINTER) {   // If the parameter is a pointer
                     funcTable->lookup(curParam->name, curParam->type.type);
-                    funcTable->lookup(curParam->name)->type.nextType = INT;
+                    funcTable->lookup(curParam->name)->type.baseType = INT;
                     funcTable->lookup(curParam->name)->type.dims.push_back(0);
                 }
                 else                                        // If the parameter is a anything other than an array or a pointer
@@ -1322,11 +1322,11 @@ parameter_declaration:
             $$->name = $2->name;
             if($2->type == ARRAY) {
                 $$->type.type = ARRAY;
-                $$->type.nextType = $1;
+                $$->type.baseType = $1;
             }
             else if($2->pc != 0) {
                 $$->type.type = POINTER;
-                $$->type.nextType = $1;
+                $$->type.baseType = $1;
             }
             else
                 $$->type.type = $1;
