@@ -1,5 +1,5 @@
-#ifndef __TRANSLATOR_H
-#define __TRANSLATOR_H
+#ifndef __ASSN6_TRANSLATOR_H
+#define __ASSN6_TRANSLATOR_H
 
 #include <iostream>
 #include <vector>
@@ -22,12 +22,12 @@ using namespace std;
 
 */
 
-#define __VOID_SIZE 0
-#define __FUNCTION_SIZE 0
-#define __CHARACTER_SIZE 1
-#define __INTEGER_SIZE 4
-#define __POINTER_SIZE 8
-#define __FLOAT_SIZE 8
+#define _SIZE_VOID 0
+#define _SIZE_FUNCTION 0
+#define _SIZE_CHAR 1
+#define _SIZE_INT 4
+#define _SIZE_POINTER 8
+#define _SIZE_FLOAT 8
 
 /*
     An enum for all data types
@@ -60,16 +60,16 @@ typedef enum  {
     Forward Class Declarations
     --------------------------
     symbol          Represents an element(entry) in the symbol table
-    symbolType      Represents the type of an element in the symbol table
-    symbolValue     Represents the value stored by a symbol in the symbol table
-    symbolTable     Represents the symbol table data structure itself
+    SymbolType      Represents the type of an element in the symbol table
+    SymbolValue     Represents the value stored by a symbol in the symbol table
+    SymbolTable     Represents the symbol table data structure itself
     quad            Denotes a quad in the Three Address Code translation
     quadArray       Denotes the entire list of quads for lazy spitting
 */
 class symbol;
-class symbolType;
-class symbolValue;
-class symbolTable;
+class SymbolType;
+class SymbolValue;
+class SymbolTable;
 
 class quad;
 class quadArray;
@@ -84,15 +84,15 @@ extern int yyparse();
 
 /*
     Class to represent the type of an element in the symbol table
-    class symbolType
+    class SymbolType
     ----------------
     Member Variables:
         pointers: int               Useful for pointer types
         type: DataType              The type of the symbol
-        nextType: symbolType        For arrays and pointers, it points to the type of the elements of the array or the pointer
+        nextType: SymbolType        For arrays and pointers, it points to the type of the elements of the array or the pointer
         dims: vector<int>           For arrays, it stores the dimensions of the array
 */
-class symbolType {
+class SymbolType {
 public:
     int pointers;
     DataType type;
@@ -103,7 +103,7 @@ public:
 
 /*
     Class to represent the value of an element in the symbol table
-    class symbolValue
+    class SymbolValue
     ------------------
     Member Variables:
         i: int                 For integers, it stores the value
@@ -111,7 +111,7 @@ public:
         c: char                For characters, it stores the value
         p: void*               For pointers, it stores the value
 */
-class symbolValue {
+class SymbolValue {
 public:
     int i;
     char c;
@@ -130,11 +130,11 @@ public:
     ------------
     Member Variables:
         name: string                The name of the symbol
-        type: symbolType            Type of the symbol
-        initVal: symbolValue*       Initial value of the symbol, if any
+        type: SymbolType            Type of the symbol
+        initVal: SymbolValue*       Initial value of the symbol, if any
         size: int                   Size of the symbol(element)
         offset: int                 Offset of the symbol in the symbol table
-        nestedTable: symbolTable*   Pointer to a nested symbol table, if any (useful for functions and blocks)
+        nestedTable: SymbolTable*   Pointer to a nested symbol table, if any (useful for functions and blocks)
     Member Methods:
         symbol()
         - Constructor
@@ -142,11 +142,11 @@ public:
 class symbol {
 public:
     string name;
-    symbolType type;
-    symbolValue* initVal;
+    SymbolType type;
+    SymbolValue* initVal;
     int size;
     int offset;
-    symbolTable* nestedTable;
+    SymbolTable* nestedTable;
 
     symbol();
 };
@@ -154,15 +154,15 @@ public:
 
 /*
     Class to represent the symbol table data structure
-    class symbolTable
+    class SymbolTable
     ------------
     Member Variables:
         table: map<string, symbol*>     List of symbols hashed using their names
         symbols: vector<symbol*>        List of all symbols present in the symbol table
         tempCount: int                  Count of temporary variables generated for the symbol table
-        parent: symbolTable*            Pointer to the parent of the symbol table, NULL for the global symbol table
+        parent: SymbolTable*            Pointer to the parent of the symbol table, NULL for the global symbol table
     Member Methods:
-        symbolTable()
+        SymbolTable()
         - Constructor
         lookup(string name, DataType t = INT, int pc = 0): symbol*
         - A method to lookup an id (given its name or lexeme) in the symbol table. If the id exists, the entry is returned, otherwise a new entry is created.
@@ -173,14 +173,14 @@ public:
         print(): void
         - Prints the symbol table in a suitable fashion
 */
-class symbolTable {
+class SymbolTable {
 public:
     map<string, symbol*> table;
     vector<symbol*> symbols;
     int offset;
     static int tempCount;
 
-    symbolTable();
+    SymbolTable();
     symbol* lookup(string name, DataType t = INT, int pc = 0);
     symbol* searchGlobal(string name);
     string gentemp(DataType t = INT);
@@ -246,7 +246,7 @@ public:
 class param {
 public:
     string name;
-    symbolType type;
+    SymbolType type;
 };
 
 
@@ -353,7 +353,7 @@ int sizeOfType(DataType t);
 /*
     Auxiliary function to print a type
 */
-string checkType(symbolType t);
+string checkType(SymbolType t);
 
 /*
     Auxiliary function to get the initial value of a symbol

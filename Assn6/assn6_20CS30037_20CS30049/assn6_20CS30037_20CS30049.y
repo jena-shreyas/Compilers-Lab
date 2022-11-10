@@ -22,8 +22,8 @@
     int intval;                     // For an integer value
     char charval;                   // For a char value
     float floatval;                 // For a float value
+    string* strval;                    // For a string
     void* ptr;                      // For a pointer
-    string* str;                    // For a string
     symbolType* symType;            // For the type of a symbol
     symbol* symp;                   // For a symbol
     DataType types;                 // For the type of an expression
@@ -46,7 +46,7 @@
 %token ASSIGNMENT  MUL_ASSIGNMENT DIV_ASSIGNMENT MOD_ASSIGNMENT ADD_ASSIGNMENT SUB_ASSIGNMENT LSHIFT_ASSIGNMENT RSHIFT_ASSIGNMENT AND_ASSIGNMENT XOR_ASSIGNMENT OR_ASSIGNMENT COMMA HASH
 
 // Identifiers are treated with type str
-%token <str> IDENTIFIER
+%token <strval> IDENTIFIER
 
 // Integer constants have a type intval
 %token <intval> INT_CONSTANT
@@ -58,7 +58,7 @@
 %token <charval> CHAR_CONSTANT
 
 // String literals have a type str
-%token <str> STRING_LITERAL
+%token <strval> STRING_LITERAL
 
 // Non-terminals of type expr (denoting expressions)
 %type <expr> 

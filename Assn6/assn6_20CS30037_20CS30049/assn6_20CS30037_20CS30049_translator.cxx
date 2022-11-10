@@ -6,25 +6,25 @@ using namespace std;
 int nextinstr = 0;
 
 // Intiailize the static variables
-int symbolTable::tempCount = 0;
+int SymbolTable::tempCount = 0;
 
 quadArray quadList;
-symbolTable globalST;
-symbolTable* ST;
+SymbolTable globalST;
+SymbolTable* ST;
 
 
-// Implementations of constructors and functions for the symbolValue class
-void symbolValue::setInitVal(int val) {
+// Implementations of constructors and functions for the SymbolValue class
+void SymbolValue::setInitVal(int val) {
     c = f = i = val;
     p = NULL;
 }
 
-void symbolValue::setInitVal(char val) {
+void SymbolValue::setInitVal(char val) {
     c = f = i = val;
     p = NULL;
 }
 
-void symbolValue::setInitVal(float val) {
+void SymbolValue::setInitVal(float val) {
     c = f = i = val;
     p = NULL;
 }
@@ -34,10 +34,10 @@ void symbolValue::setInitVal(float val) {
 symbol::symbol(): nestedTable(NULL) {}
 
 
-// Implementations of constructors and functions for the symbolTable class
-symbolTable::symbolTable(): offset(0) {}
+// Implementations of constructors and functions for the SymbolTable class
+SymbolTable::SymbolTable(): offset(0) {}
 
-symbol* symbolTable::lookup(string name, DataType t, int pc) {
+symbol* SymbolTable::lookup(string name, DataType t, int pc) {
     if(table.count(name) == 0) {
         symbol* sym = new symbol();
         sym->name = name;
@@ -50,7 +50,7 @@ symbol* symbolTable::lookup(string name, DataType t, int pc) {
             offset += sym->size;
         }
         else {
-            sym->size = __POINTER_SIZE;
+            sym->size = _SIZE_POINTER;
             sym->type.nextType = t;
             sym->type.pointers = pc;
             sym->type.type = ARRAY;
@@ -61,13 +61,13 @@ symbol* symbolTable::lookup(string name, DataType t, int pc) {
     return table[name];
 }
 
-symbol* symbolTable::searchGlobal(string name) {
+symbol* SymbolTable::searchGlobal(string name) {
     return (table.count(name) ? table[name] : NULL);
 }
 
-string symbolTable::gentemp(DataType t) {
+string SymbolTable::gentemp(DataType t) {
     // Create the name for the temporary
-    string tempName = "t" + to_string(symbolTable::tempCount++);
+    string tempName = "t" + to_string(SymbolTable::tempCount++);
     
     // Initialize the required attributes
     symbol* sym = new symbol();
@@ -84,7 +84,7 @@ string symbolTable::gentemp(DataType t) {
     return tempName;
 }
 
-void symbolTable::print(string tableName) {
+void SymbolTable::print(string tableName) {
     for(int i = 0; i < 120; i++) {
         cout << '-';
     }
@@ -107,7 +107,7 @@ void symbolTable::print(string tableName) {
     cout << endl;
 
     // For storing nested symbol tables
-    vector<pair<string, symbolTable*>> tableList;
+    vector<pair<string, SymbolTable*>> tableList;
 
     // Print the symbols in the symbol table
     for(int i = 0; i < (int)symbols.size(); i++) {
@@ -133,8 +133,8 @@ void symbolTable::print(string tableName) {
     cout << endl << endl;
 
     // Recursively call the print function for the nested symbol tables
-    for(vector<pair<string, symbolTable*>>::iterator it = tableList.begin(); it != tableList.end(); it++) {
-        pair<string, symbolTable*> p = (*it);
+    for(vector<pair<string, SymbolTable*>>::iterator it = tableList.begin(); it != tableList.end(); it++) {
+        pair<string, SymbolTable*> p = (*it);
         p.second->print(p.first);
     }
 
@@ -368,23 +368,23 @@ void convertIntToBool(expression* expr) {
 // Implementation of the sizeOfType function
 int sizeOfType(DataType t) {
     if(t == VOID)
-        return __VOID_SIZE;
+        return _SIZE_VOID;
     else if(t == CHAR)
-        return __CHARACTER_SIZE;
+        return _SIZE_CHAR;
     else if(t == INT)
-        return __INTEGER_SIZE;
+        return _SIZE_INT;
     else if(t == POINTER)
-        return __POINTER_SIZE;
+        return _SIZE_POINTER;
     else if(t == FLOAT)
-        return __FLOAT_SIZE;
+        return _SIZE_FLOAT;
     else if(t == FUNCTION)
-        return __FUNCTION_SIZE;
+        return _SIZE_FUNCTION;
     else
         return 0;
 }
 
 // Implementation of the checkType function
-string checkType(symbolType t) {
+string checkType(SymbolType t) {
     if(t.type == VOID)
         return "void";
     else if(t.type == CHAR)
