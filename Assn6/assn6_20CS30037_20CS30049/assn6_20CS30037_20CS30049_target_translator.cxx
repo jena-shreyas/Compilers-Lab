@@ -10,7 +10,7 @@ extern SymbolTable *SymTbl;
 extern QuadArray QuadList;
 
 // Declare global variables
-vector<string> stringConsts;
+vector<string> const_strs;
 map<int, string> labels;
 stack<pair<string, int>> parameters;
 int labelCount = 0;
@@ -25,21 +25,21 @@ void printGlobal(ofstream &asm_file)
         Symbol *sym = *it;
         if (sym->type.type == CHAR && sym->name[0] != 't')
         {
-            if (sym->initVal != NULL)
+            if (sym->init_val != NULL)
             {
                 asm_file << "\t.globl\t" << sym->name << endl;
                 asm_file << "\t.data" << endl;
                 asm_file << "\t.type\t" << sym->name << ", @object" << endl;
                 asm_file << "\t.size\t" << sym->name << ", 1" << endl;
                 asm_file << sym->name << ":" << endl;
-                asm_file << "\t.byte\t" << sym->initVal->char_ << endl;
+                asm_file << "\t.byte\t" << sym->init_val->char_ << endl;
             }
             else
                 asm_file << "\t.comm\t" << sym->name << ",1,1" << endl;
         }
         else if (sym->type.type == INT && sym->name[0] != 't')
         {
-            if (sym->initVal != NULL)
+            if (sym->init_val != NULL)
             {
                 asm_file << "\t.globl\t" << sym->name << endl;
                 asm_file << "\t.data" << endl;
@@ -47,7 +47,7 @@ void printGlobal(ofstream &asm_file)
                 asm_file << "\t.type\t" << sym->name << ", @object" << endl;
                 asm_file << "\t.size\t" << sym->name << ", 4" << endl;
                 asm_file << sym->name << ":" << endl;
-                asm_file << "\t.long\t" << sym->initVal->int_ << endl;
+                asm_file << "\t.long\t" << sym->init_val->int_ << endl;
             }
             else
                 asm_file << "\t.comm\t" << sym->name << ",4,4" << endl;
@@ -62,7 +62,7 @@ void printStrings(ofstream &asm_file)
     asm_file << ".section\t.rodata" << endl;
     int i = 0;
 
-    for (auto it = stringConsts.begin(); it != stringConsts.end(); it++)
+    for (auto it = const_strs.begin(); it != const_strs.end(); it++)
     {
         asm_file << ".LC" << i++ << ":" << endl;
         asm_file << "\t.string " << *it << endl;
@@ -116,9 +116,9 @@ void quadCode(Quad q, ofstream &asm_file)
     Symbol *loc1 = SymTbl->lookup(q.arg1);
     Symbol *loc2 = SymTbl->lookup(q.arg2);
     Symbol *loc3 = SymTbl->lookup(q.result);
-    Symbol *glb1 = SymTbl_Global.searchGlobal(q.arg1);
-    Symbol *glb2 = SymTbl_Global.searchGlobal(q.arg2);
-    Symbol *glb3 = SymTbl_Global.searchGlobal(q.result);
+    Symbol *glb1 = SymTbl_Global.find_glbl(q.arg1);
+    Symbol *glb2 = SymTbl_Global.find_glbl(q.arg2);
+    Symbol *glb3 = SymTbl_Global.find_glbl(q.result);
 
     if (SymTbl != &SymTbl_Global)
     {
@@ -575,8 +575,8 @@ void generateTargetCode(ofstream &asm_file)
             else
                 continue;
 
-            currFunc = SymTbl_Global.searchGlobal(QuadList.quads[i].result);
-            currFuncTable = currFunc->nestedTable;
+            currFunc = SymTbl_Global.find_glbl(QuadList.quads[i].result);
+            currFuncTable = currFunc->nested_table;
             int takingParam = 1, memBind = 16;
             SymTbl = currFuncTable;
             
@@ -640,7 +640,7 @@ int main(int argc, char *argv[])
 
     QuadList.print_quads(); // Print the three address quads
 
-    SymTbl->print("SymTbl.global"); // Print the symbol tables
+    SymTbl->print_table("SymTbl.global"); // Print the symbol tables
 
     SymTbl = &SymTbl_Global;
 

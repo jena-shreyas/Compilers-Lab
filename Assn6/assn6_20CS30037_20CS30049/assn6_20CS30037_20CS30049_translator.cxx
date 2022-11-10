@@ -9,7 +9,7 @@ SymbolTable* SymTbl;                // pointer to symbol table
 
 // Initialize global and static variables
 int nextinstr = 0;
-int SymbolTable::tempCount = 0;
+int SymbolTable::temp_count = 0;
 
 // Implementations of constructors and functions for the SymbolValue class
 void SymbolValue::init(int val) 
@@ -38,7 +38,7 @@ void SymbolValue::init(float val)
 
 
 // Implementations of constructors and functions for the symbol class
-Symbol::Symbol(): nestedTable(NULL) {}
+Symbol::Symbol(): nested_table(NULL) {}
 
 
 // Implementations of constructors and functions for the SymbolTable class
@@ -52,7 +52,7 @@ Symbol* SymbolTable::lookup(string name, data_type t, int pc)
         sym->name = name;
         sym->type.type = t;
         sym->offset = offset;
-        sym->initVal = NULL;
+        sym->init_val = NULL;
 
         if (pc == 0) 
         {
@@ -63,7 +63,7 @@ Symbol* SymbolTable::lookup(string name, data_type t, int pc)
         else 
         {
             sym->size = _SIZE_POINTER;
-            sym->type.baseType = t;
+            sym->type.base_type = t;
             sym->type.pointers = pc;
             sym->type.type = ARRAY;
         }
@@ -75,7 +75,7 @@ Symbol* SymbolTable::lookup(string name, data_type t, int pc)
     return table[name];
 }
 
-Symbol* SymbolTable::searchGlobal(string name) 
+Symbol* SymbolTable::find_glbl(string name) 
 {
     return (table.count(name) ? table[name] : NULL);
 }
@@ -83,7 +83,7 @@ Symbol* SymbolTable::searchGlobal(string name)
 string SymbolTable::gentemp(data_type t) 
 {
     // Create the name for the temporary
-    string tempName = "t" + to_string(SymbolTable::tempCount++);
+    string tempName = "t" + to_string(SymbolTable::temp_count++);
     
     // Initialize the required attributes
     Symbol* sym = new Symbol();
@@ -91,7 +91,7 @@ string SymbolTable::gentemp(data_type t)
     sym->size = sizeOfType(t);
     sym->offset = offset;
     sym->type.type = t;
-    sym->initVal = NULL;
+    sym->init_val = NULL;
 
     offset += sym->size;
     symbols.push_back(sym);
@@ -100,7 +100,7 @@ string SymbolTable::gentemp(data_type t)
     return tempName;
 }
 
-void SymbolTable::print(string tableName) 
+void SymbolTable::print_table(string tableName) 
 {
 
     for (int i = 0; i < 120; i++) 
@@ -146,11 +146,11 @@ void SymbolTable::print(string tableName)
         cout << left << setw(15) << sym->offset;
         cout << left;
 
-        if (sym->nestedTable != NULL) 
+        if (sym->nested_table != NULL) 
         {
-            string nestedTableName = tableName + "." + sym->name;
-            cout << nestedTableName << endl;
-            tableList.push_back({nestedTableName, sym->nestedTable});
+            string nested_tableName = tableName + "." + sym->name;
+            cout << nested_tableName << endl;
+            tableList.push_back({nested_tableName, sym->nested_table});
         }
 
         else
@@ -169,7 +169,7 @@ void SymbolTable::print(string tableName)
     for (vector<pair<string, SymbolTable*>>::iterator it = tableList.begin(); it != tableList.end(); it++) 
     {
         pair<string, SymbolTable*> p = (*it);
-        p.second->print(p.first);
+        p.second->print_table(p.first);
     }
 
 }
@@ -513,13 +513,13 @@ string checkType(SymbolType t)
     else if (t.type == POINTER) 
     {        // Depending on type of pointer
         string tp = "";
-        if (t.baseType == CHAR)
+        if (t.base_type == CHAR)
             tp += "char";
 
-        else if (t.baseType == INT)
+        else if (t.base_type == INT)
             tp += "int";
 
-        else if (t.baseType == FLOAT)
+        else if (t.base_type == FLOAT)
             tp += "float";
 
         tp += string(t.pointers, '*');
@@ -529,13 +529,13 @@ string checkType(SymbolType t)
     else if (t.type == ARRAY)               // Depending on type of array
     {          
         string tp = "";
-        if (t.baseType == CHAR)
+        if (t.base_type == CHAR)
             tp += "char";
 
-        else if (t.baseType == INT)
+        else if (t.base_type == INT)
             tp += "int";
 
-        else if (t.baseType == FLOAT)
+        else if (t.base_type == FLOAT)
             tp += "float";
 
         vector<int> dim = t.dims;
@@ -561,16 +561,16 @@ string checkType(SymbolType t)
 // Implementation of the getInitVal function
 string getInitVal(Symbol* sym) 
 {
-    if (sym->initVal != NULL) 
+    if (sym->init_val != NULL) 
     {
         if (sym->type.type == INT)
-            return to_string(sym->initVal->int_);
+            return to_string(sym->init_val->int_);
 
         else if (sym->type.type == CHAR)
-            return to_string(sym->initVal->char_);
+            return to_string(sym->init_val->char_);
 
         else if (sym->type.type == FLOAT)
-            return to_string(sym->initVal->flt_);
+            return to_string(sym->init_val->flt_);
 
         else
             return "-";

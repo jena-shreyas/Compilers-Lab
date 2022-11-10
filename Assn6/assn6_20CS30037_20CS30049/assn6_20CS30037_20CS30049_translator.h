@@ -80,7 +80,7 @@ class SymbolType {
 
         int pointers;                   // useful for pointer types
         data_type type;                  // type of symbol (i.e, E.type)
-        data_type baseType;              // In case of arrays, points to base type; in case of pointers, points to the type of value pointed
+        data_type base_type;              // In case of arrays, points to base type; in case of pointers, points to the type of value pointed
         vector<int> dims;               // In case of array type, this is used to store array dimensions
 
 };
@@ -118,10 +118,10 @@ class SymbolValue {
     Member Variables:
         name: string                The name of the symbol
         type: SymbolType            Type of the symbol
-        initVal: SymbolValue*       Initial value of the symbol, if any
+        init_val: SymbolValue*       Initial value of the symbol, if any
         size: int                   Size of the symbol(element)
         offset: int                 Offset of the symbol in the symbol table
-        nestedTable: SymbolTable*   Pointer to a nested symbol table, if any (useful for functions and blocks)
+        nested_table: SymbolTable*   Pointer to a nested symbol table, if any (useful for functions and blocks)
     Member Methods:
         symbol()
         - Constructor
@@ -132,10 +132,10 @@ class Symbol {
 
         string name;
         SymbolType type;
-        SymbolValue* initVal;
+        SymbolValue* init_val;
         int size;
         int offset;
-        SymbolTable* nestedTable;
+        SymbolTable* nested_table;
 
         Symbol();
 
@@ -149,14 +149,14 @@ class Symbol {
     Member Variables:
         table: map<string, symbol*>     List of symbols hashed using their names
         symbols: vector<symbol*>        List of all symbols present in the symbol table
-        tempCount: int                  Count of temporary variables generated for the symbol table
+        temp_count: int                  Count of temporary variables generated for the symbol table
         parent: SymbolTable*            Pointer to the parent of the symbol table, NULL for the global symbol table
     Member Methods:
         SymbolTable()
         - Constructor
         lookup(string name, data_type t = INT, int pc = 0): symbol*
         - A method to lookup an id (given its name or lexeme) in the symbol table. If the id exists, the entry is returned, otherwise a new entry is created.
-        searchGlobal(string name): symbol*
+        find_glbl(string name): symbol*
         - A method to search for an id in the global symbol table. If the id exists, the entry is returned, otherwise NULL is returned.
         gentemp(data_type t = INT): string
         - A method to generate a new temporary, insert it to the symbol table, and return a pointer to the entry
@@ -172,14 +172,14 @@ class SymbolTable {
         map<string, Symbol*> table;
         vector<Symbol*> symbols;
         int offset;
-        static int tempCount;
+        static int temp_count;
 
         // constrcutor and member functions
         SymbolTable();
         Symbol* lookup(string name, data_type t = INT, int pc = 0);
         string gentemp(data_type t = INT);
-        Symbol* searchGlobal(string name);
-        void print(string tableName);
+        Symbol* find_glbl(string name);
+        void print_table(string tableName);
 
 };
 
@@ -305,10 +305,10 @@ class Expression {
         pointers: int               Number of pointers
         type: data_type              Type of the declaration
         li: vector<int>             List of instructions for the declaration
-        initVal: expression*        Initial value of the declaration
+        init_val: expression*        Initial value of the declaration
         pc: int                     Useful for pointers and arrays
 */
-class declaration {
+class Declaration {
 
     public:
 
@@ -318,7 +318,7 @@ class declaration {
         data_type type;
         data_type nextType;
         vector<int> li;
-        Expression* initVal;
+        Expression* init_val;
         int pc;
 
 };
