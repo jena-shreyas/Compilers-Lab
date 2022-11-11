@@ -36,47 +36,42 @@ $(BASE).c:
 	touch $(BASE).c
 
 test: tinyC lib$(BASE).a
-	@mkdir -p outputs
+	@mkdir -p test_outputs
 	@mkdir -p bin
 
 	@echo "\nRunning Test 1\n"
-	./tinyC 1 < inputs/$(BASE)_test1.c > outputs/$(BASE)_quads1.out
-	mv $(BASE)_1.s outputs/$(BASE)_1.s
-	gcc -c outputs/$(BASE)_1.s -o outputs/$(BASE)_1.o
-	gcc outputs/$(BASE)_1.o -o bin/test1 -L. -l$(BASE) -no-pie
+	./tinyC 1 < test_inputs/$(BASE)_test1.c > test_outputs/$(BASE)_quads1.out
+	mv $(BASE)_1.s test_outputs/$(BASE)_1.s
+	gcc -c test_outputs/$(BASE)_1.s -o test_outputs/$(BASE)_1.o
+	gcc test_outputs/$(BASE)_1.o -o bin/test1 -L. -l$(BASE) -no-pie
 
 	@echo "\nRunning Test 2\n"
-	./tinyC 2 < inputs/$(BASE)_test2.c > outputs/$(BASE)_quads2.out
-	mv $(BASE)_2.s outputs/$(BASE)_2.s
-	gcc -c outputs/$(BASE)_2.s -o outputs/$(BASE)_2.o
-	gcc outputs/$(BASE)_2.o -o bin/test2 -L. -l$(BASE) -no-pie
+	./tinyC 2 < test_inputs/$(BASE)_test2.c > test_outputs/$(BASE)_quads2.out
+	mv $(BASE)_2.s test_outputs/$(BASE)_2.s
+	gcc -c test_outputs/$(BASE)_2.s -o test_outputs/$(BASE)_2.o
+	gcc test_outputs/$(BASE)_2.o -o bin/test2 -L. -l$(BASE) -no-pie
 
 	@echo "\nRunning Test 3\n"
-	./tinyC 3 < inputs/$(BASE)_test3.c > outputs/$(BASE)_quads3.out
-	mv $(BASE)_3.s outputs/$(BASE)_3.s
-	gcc -c outputs/$(BASE)_3.s -o outputs/$(BASE)_3.o
-	gcc outputs/$(BASE)_3.o -o bin/test3 -L. -l$(BASE) -no-pie
+	./tinyC 3 < test_inputs/$(BASE)_test3.c > test_outputs/$(BASE)_quads3.out
+	mv $(BASE)_3.s test_outputs/$(BASE)_3.s
+	gcc -c test_outputs/$(BASE)_3.s -o test_outputs/$(BASE)_3.o
+	gcc test_outputs/$(BASE)_3.o -o bin/test3 -L. -l$(BASE) -no-pie
 
 	@echo "\nRunning Test 4\n"
-	./tinyC 4 < inputs/$(BASE)_test4.c > outputs/$(BASE)_quads4.out
-	mv $(BASE)_4.s outputs/$(BASE)_4.s
-	gcc -c outputs/$(BASE)_4.s -o outputs/$(BASE)_4.o
-	gcc outputs/$(BASE)_4.o -o bin/test4 -L. -l$(BASE) -no-pie
+	./tinyC 4 < test_inputs/$(BASE)_test4.c > test_outputs/$(BASE)_quads4.out
+	mv $(BASE)_4.s test_outputs/$(BASE)_4.s
+	gcc -c test_outputs/$(BASE)_4.s -o test_outputs/$(BASE)_4.o
+	gcc test_outputs/$(BASE)_4.o -o bin/test4 -L. -l$(BASE) -no-pie
 
 	@echo "\nRunning Test 5\n"
-	./tinyC 5 < inputs/$(BASE)_test5.c > outputs/$(BASE)_quads5.out
-	mv $(BASE)_5.s outputs/$(BASE)_5.s
-	gcc -c outputs/$(BASE)_5.s -o outputs/$(BASE)_5.o
-	gcc outputs/$(BASE)_5.o -o bin/test5 -L. -l$(BASE) -no-pie
+	./tinyC 5 < test_inputs/$(BASE)_test5.c > test_outputs/$(BASE)_quads5.out
+	mv $(BASE)_5.s test_outputs/$(BASE)_5.s
+	gcc -c test_outputs/$(BASE)_5.s -o test_outputs/$(BASE)_5.o
+	gcc test_outputs/$(BASE)_5.o -o bin/test5 -L. -l$(BASE) -no-pie
 
-	@echo "\nRunning Test 6\n"
-	./tinyC 6 < inputs/$(BASE)_test6.c > outputs/$(BASE)_quads6.out
-	mv $(BASE)_6.s outputs/$(BASE)_6.s
-	gcc -c outputs/$(BASE)_6.s -o outputs/$(BASE)_6.o
-	gcc outputs/$(BASE)_6.o -o bin/test6 -L. -l$(BASE) -no-pie
-
-	@echo "\nThe three address quads, assembly files and object files are in outputs/\n"
+	@echo "\nThe three address quads, assembly files and object files are in test_outputs/\n"
 	@echo "The binaries for the test files are in bin/\n"
 
 clean:
-	rm -f lex.yy.c *.tab.c *.tab.h *.output *.o *.s *.a *.out *.gch tinyC outputs/* bin/*
+	rm -f lex.yy.c *.tab.c *.tab.h *.output *.o *.s *.a *.out *.gch tinyC test_outputs/* bin/*
+	rmdir bin

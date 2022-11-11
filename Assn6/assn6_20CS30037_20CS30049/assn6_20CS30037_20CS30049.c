@@ -1,3 +1,11 @@
+/*
+    Compilers Lab Assignment - 6
+    Group Members :-
+        Pranav Nyati - 20CS30037
+        Shreyas Jena - 20CS30049
+*/
+
+// File defining basic input and output utility functions
 #include "myl.h"
 #define BUFF_SIZE 100
 

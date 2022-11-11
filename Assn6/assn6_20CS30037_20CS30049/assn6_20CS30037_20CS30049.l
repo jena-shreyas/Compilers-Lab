@@ -1,11 +1,10 @@
 /* C Declarations and Definitions */
 %{  
     /* 
-    Compilers Lab : Assignment 5
+    Compilers Lab : Assignment 6
     Group Members:
-        1. Pranav Nyati (20CS30037)
-        2. Shreyas Jena (20CS30049)
-    
+        1. Pranav Nyati - 20CS30037
+        2. Shreyas Jena - 20CS30049
     
     Lexer for tinyC using Flex      
     */

@@ -1,0 +1,273 @@
+------------------------------------------------------------------------------------------------------------------------
+THREE ADDRESS CODE (TAC):
+------------------------------------------------------------------------------------------------------------------------
+
+0   : printStr: 
+1   : function printStr ends
+
+2   : printInt: 
+3   : function printInt ends
+
+4   : readInt: 
+5   : function readInt ends
+6   :    t0 = 2
+7   :    TWO = t0
+
+8   : main: 
+9   :    t1 = 97
+10  :    ch = t1
+11  :    t2 = 69
+12  :    param t2
+13  :    t3 = call printStr, 1
+14  :    t4 = &err
+15  :    param t4
+16  :    t5 = call readInt, 1
+17  :    a = t5
+18  :    t6 = 69
+19  :    param t6
+20  :    t7 = call printStr, 1
+21  :    t8 = &err
+22  :    param t8
+23  :    t9 = call readInt, 1
+24  :    b = t9
+25  :    t10 = 84
+26  :    param t10
+27  :    t11 = call printStr, 1
+28  :    param a
+29  :    t12 = call printInt, 1
+30  :    t13 = 92
+31  :    param t13
+32  :    t14 = call printStr, 1
+33  :    t15 = 84
+34  :    param t15
+35  :    t16 = call printStr, 1
+36  :    param b
+37  :    t17 = call printInt, 1
+38  :    t18 = 92
+39  :    param t18
+40  :    t19 = call printStr, 1
+41  :    t20 = b * TWO
+42  :    t21 = a + t20
+43  :    p = t21
+44  :    t22 = b * TWO
+45  :    t23 = a - t22
+46  :    q = t23
+47  :    t24 = b + TWO
+48  :    t25 = a * t24
+49  :    r = t25
+50  :    t26 = a + TWO
+51  :    t27 = t26 / b
+52  :    s = t27
+53  :    t28 = a + TWO
+54  :    t29 = t28 % b
+55  :    t = t29
+56  :    t30 = 84
+57  :    param t30
+58  :    t31 = call printStr, 1
+59  :    param p
+60  :    t32 = call printInt, 1
+61  :    t33 = 92
+62  :    param t33
+63  :    t34 = call printStr, 1
+64  :    t35 = 84
+65  :    param t35
+66  :    t36 = call printStr, 1
+67  :    param q
+68  :    t37 = call printInt, 1
+69  :    t38 = 92
+70  :    param t38
+71  :    t39 = call printStr, 1
+72  :    t40 = 84
+73  :    param t40
+74  :    t41 = call printStr, 1
+75  :    param r
+76  :    t42 = call printInt, 1
+77  :    t43 = 92
+78  :    param t43
+79  :    t44 = call printStr, 1
+80  :    t45 = 84
+81  :    param t45
+82  :    t46 = call printStr, 1
+83  :    param s
+84  :    t47 = call printInt, 1
+85  :    t48 = 92
+86  :    param t48
+87  :    t49 = call printStr, 1
+88  :    t50 = 84
+89  :    param t50
+90  :    t51 = call printStr, 1
+91  :    param t
+92  :    t52 = call printInt, 1
+93  :    t53 = 92
+94  :    param t53
+95  :    t54 = call printStr, 1
+96  :    t55 = p * q
+97  :    t56 = q / p
+98  :    t57 = t55 + t56
+99  :    u = t57
+100 :    t58 = r * s
+101 :    t59 = s / r
+102 :    t60 = t58 + t59
+103 :    v = t60
+104 :    t61 = 84
+105 :    param t61
+106 :    t62 = call printStr, 1
+107 :    param u
+108 :    t63 = call printInt, 1
+109 :    t64 = 92
+110 :    param t64
+111 :    t65 = call printStr, 1
+112 :    t66 = 84
+113 :    param t66
+114 :    t67 = call printStr, 1
+115 :    param v
+116 :    t68 = call printInt, 1
+117 :    t69 = 92
+118 :    param t69
+119 :    t70 = call printStr, 1
+120 :    param .LC0
+121 :    t71 = call printStr, 1
+122 :    t72 = 0
+123 :    return t72
+124 : function main ends
+
+------------------------------------------------------------------------------------------------------------------------
+Symbol Table: SymTbl.global                                     
+------------------------------------------------------------------------------------------------------------------------
+Name                     Type                     Initial Value       Size           Offset         Nested
+------------------------------------------------------------------------------------------------------------------------
+printStr                 function                 -                   0              0              SymTbl.global.printStr
+printInt                 function                 -                   0              0              SymTbl.global.printInt
+readInt                  function                 -                   0              0              SymTbl.global.readInt
+t0                       int                      2                   4              0              NULL
+TWO                      int                      2                   4              4              NULL
+main                     function                 -                   0              8              SymTbl.global.main
+------------------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------------------------------
+Symbol Table: SymTbl.global.printStr                            
+------------------------------------------------------------------------------------------------------------------------
+Name                     Type                     Initial Value       Size           Offset         Nested
+------------------------------------------------------------------------------------------------------------------------
+ch                       char                     -                   1              0              NULL
+RETVAL                   int                      -                   4              1              NULL
+------------------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------------------------------
+Symbol Table: SymTbl.global.printInt                            
+------------------------------------------------------------------------------------------------------------------------
+Name                     Type                     Initial Value       Size           Offset         Nested
+------------------------------------------------------------------------------------------------------------------------
+n                        int                      -                   4              0              NULL
+RETVAL                   int                      -                   4              4              NULL
+------------------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------------------------------
+Symbol Table: SymTbl.global.readInt                             
+------------------------------------------------------------------------------------------------------------------------
+Name                     Type                     Initial Value       Size           Offset         Nested
+------------------------------------------------------------------------------------------------------------------------
+eP                       int                      -                   4              0              NULL
+RETVAL                   int                      -                   4              4              NULL
+------------------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------------------------------
+Symbol Table: SymTbl.global.main                                
+------------------------------------------------------------------------------------------------------------------------
+Name                     Type                     Initial Value       Size           Offset         Nested
+------------------------------------------------------------------------------------------------------------------------
+RETVAL                   int                      -                   4              0              NULL
+i                        int                      -                   4              4              NULL
+c                        int                      -                   4              8              NULL
+ptr                      int*                     -                   4              12             NULL
+ptr_2                    float*                   -                   4              16             NULL
+t1                       char                     97                  1              20             NULL
+ch                       char                     97                  1              21             NULL
+a                        int                      -                   4              22             NULL
+b                        int                      -                   4              26             NULL
+err                      int                      -                   4              30             NULL
+printStr                 int                      -                   4              34             NULL
+t2                       char                     69                  1              38             NULL
+t3                       int                      -                   4              39             NULL
+readInt                  int                      -                   4              43             NULL
+t4                       int                      -                   4              47             NULL
+t5                       int                      -                   4              51             NULL
+t6                       char                     69                  1              55             NULL
+t7                       int                      -                   4              56             NULL
+t8                       int                      -                   4              60             NULL
+t9                       int                      -                   4              64             NULL
+t10                      char                     84                  1              68             NULL
+t11                      int                      -                   4              69             NULL
+printInt                 int                      -                   4              73             NULL
+t12                      int                      -                   4              77             NULL
+t13                      char                     92                  1              81             NULL
+t14                      int                      -                   4              82             NULL
+t15                      char                     84                  1              86             NULL
+t16                      int                      -                   4              87             NULL
+t17                      int                      -                   4              91             NULL
+t18                      char                     92                  1              95             NULL
+t19                      int                      -                   4              96             NULL
+p                        int                      -                   4              100            NULL
+q                        int                      -                   4              104            NULL
+r                        int                      -                   4              108            NULL
+s                        int                      -                   4              112            NULL
+t                        int                      -                   4              116            NULL
+u                        int                      -                   4              120            NULL
+v                        int                      -                   4              124            NULL
+TWO                      int                      -                   4              128            NULL
+t20                      int                      -                   4              132            NULL
+t21                      int                      -                   4              136            NULL
+t22                      int                      -                   4              140            NULL
+t23                      int                      -                   4              144            NULL
+t24                      int                      -                   4              148            NULL
+t25                      int                      -                   4              152            NULL
+t26                      int                      -                   4              156            NULL
+t27                      int                      -                   4              160            NULL
+t28                      int                      -                   4              164            NULL
+t29                      int                      -                   4              168            NULL
+t30                      char                     84                  1              172            NULL
+t31                      int                      -                   4              173            NULL
+t32                      int                      -                   4              177            NULL
+t33                      char                     92                  1              181            NULL
+t34                      int                      -                   4              182            NULL
+t35                      char                     84                  1              186            NULL
+t36                      int                      -                   4              187            NULL
+t37                      int                      -                   4              191            NULL
+t38                      char                     92                  1              195            NULL
+t39                      int                      -                   4              196            NULL
+t40                      char                     84                  1              200            NULL
+t41                      int                      -                   4              201            NULL
+t42                      int                      -                   4              205            NULL
+t43                      char                     92                  1              209            NULL
+t44                      int                      -                   4              210            NULL
+t45                      char                     84                  1              214            NULL
+t46                      int                      -                   4              215            NULL
+t47                      int                      -                   4              219            NULL
+t48                      char                     92                  1              223            NULL
+t49                      int                      -                   4              224            NULL
+t50                      char                     84                  1              228            NULL
+t51                      int                      -                   4              229            NULL
+t52                      int                      -                   4              233            NULL
+t53                      char                     92                  1              237            NULL
+t54                      int                      -                   4              238            NULL
+t55                      int                      -                   4              242            NULL
+t56                      int                      -                   4              246            NULL
+t57                      int                      -                   4              250            NULL
+t58                      int                      -                   4              254            NULL
+t59                      int                      -                   4              258            NULL
+t60                      int                      -                   4              262            NULL
+t61                      char                     84                  1              266            NULL
+t62                      int                      -                   4              267            NULL
+t63                      int                      -                   4              271            NULL
+t64                      char                     92                  1              275            NULL
+t65                      int                      -                   4              276            NULL
+t66                      char                     84                  1              280            NULL
+t67                      int                      -                   4              281            NULL
+t68                      int                      -                   4              285            NULL
+t69                      char                     92                  1              289            NULL
+t70                      int                      -                   4              290            NULL
+.LC0                     int                      -                   4              294            NULL
+t71                      int                      -                   4              298            NULL
+t72                      int                      0                   4              302            NULL
+------------------------------------------------------------------------------------------------------------------------
+

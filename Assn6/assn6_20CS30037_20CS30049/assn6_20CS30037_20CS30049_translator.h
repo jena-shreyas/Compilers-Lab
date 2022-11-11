@@ -85,97 +85,56 @@ class SymbolType {
 
 };
 
-    /*
-    Class to represent the value of an element in the symbol table
-    class SymbolValue
-    ------------------
-    Member Variables:
-        i: int                 For integers, it stores the value
-        f: float               For floats, it stores the value
-        c: char                For characters, it stores the value
-        p: void*               For pointers, it stores the value
-    */
-
+// class to represent symbol value
 class SymbolValue {
 
     public:
     
-        int int_;
-        char char_;
-        float flt_;
-        void* ptr_;
+        int int_;           // stores int value
+        char char_;         // stores char value
+        float flt_;         // stores float value
+        void* ptr_;         // stores ptr value
 
+        // functions to initialize symbol with given value type
         void init(int val);
         void init(char val);
         void init(float val);
 
 };
 
-/*
-    Class to represent an element(entry) in the symbol table
-    class symbol
-    ------------
-    Member Variables:
-        name: string                The name of the symbol
-        type: SymbolType            Type of the symbol
-        init_val: SymbolValue*       Initial value of the symbol, if any
-        size: int                   Size of the symbol(element)
-        offset: int                 Offset of the symbol in the symbol table
-        nested_table: SymbolTable*   Pointer to a nested symbol table, if any (useful for functions and blocks)
-    Member Methods:
-        symbol()
-        - Constructor
-*/
+// class to represent an element in the symbol table
 class Symbol {
 
     public:
 
-        string name;
-        SymbolType type;
-        SymbolValue* init_val;
-        int size;
-        int offset;
-        SymbolTable* nested_table;
+        // member variables
+        string name;                // symbol name
+        SymbolType type;            // symbol data type
+        SymbolValue* init_val;      // initial value
+        int size;                   // size of symbol
+        int offset;                 // offset of symbol 
+        SymbolTable* nested_table;  // ptr to nested table (only for functions and other block scopes)
 
+        // Constructor
         Symbol();
 
 };
 
-
-/*
-    Class to represent the symbol table data structure
-    class SymbolTable
-    ------------
-    Member Variables:
-        table: map<string, symbol*>     List of symbols hashed using their names
-        symbols: vector<symbol*>        List of all symbols present in the symbol table
-        temp_count: int                  Count of temporary variables generated for the symbol table
-        parent: SymbolTable*            Pointer to the parent of the symbol table, NULL for the global symbol table
-    Member Methods:
-        SymbolTable()
-        - Constructor
-        lookup(string name, data_type t = INT, int pc = 0): symbol*
-        - A method to lookup an id (given its name or lexeme) in the symbol table. If the id exists, the entry is returned, otherwise a new entry is created.
-        find_glbl(string name): symbol*
-        - A method to search for an id in the global symbol table. If the id exists, the entry is returned, otherwise NULL is returned.
-        gentemp(data_type t = INT): string
-        - A method to generate a new temporary, insert it to the symbol table, and return a pointer to the entry
-        print(): void
-        - Prints the symbol table in a suitable fashion
-*/
+// class to represent a symbol table
 
 class SymbolTable {
 
     public:
 
         // member variables
-        map<string, Symbol*> table;
-        vector<Symbol*> symbols;
-        int offset;
-        static int temp_count;
+        map<string, Symbol*> table;                 // hashtable to map string symbol names to corresponding entries in symbol table
+        vector<Symbol*> symbols;                    // list of symbols in symbol table
+        int offset;                                 // variable to maintain offset
+        static int temp_count;                      // maintains count of temp variables
 
-        // constrcutor and member functions
+        // constructor and member functions
         SymbolTable();
+
         Symbol* lookup(string name, data_type t = INT, int pc = 0);
         string gentemp(data_type t = INT);
         Symbol* find_glbl(string name);
@@ -183,118 +142,67 @@ class SymbolTable {
 
 };
 
-
-/*
-    Class to denote a quad in the Three Address Code translation
-    class quad
-    ------------
-    Member Variables:
-        op: string          Operator in the three address code
-        arg1: string        First argument in the three address code
-        arg2: string        Second argument in the three address code
-        result: string      Result of the three address code
-    Member Methods:
-    quad(string, string, string, opcode)
-    - Constructor
-    print(): void
-    - Returns a formatted string to help in printing the quad
-*/
-
+// function to represent a TAC quad
 class Quad {
 
     public:
 
         // member variables
-        opcode op;
-        string arg1;
-        string arg2;
-        string result;
+        opcode op;              // operator of the TAC
+        string arg1;            // 1st argument of the TAC
+        string arg2;            // 2nd argument of the TAC(if any)
+        string result;          // variable to store result of the TAC
 
         // constructor and member functions
         Quad(string, string, string, opcode);
+
+        // function to print quad
         string print_quad();
 
 };
 
-/*
-    Class to denote the entire list of quads for lazy spitting
-    class QuadArray
-    ------------
-    Member Variables:
-        quads: vector<quads>    A vector of all the quads generated
-    Member Methods:
-        print(): void
-        - Prints the entire list of quads
-*/
-
+// class to represent array of quads
 class QuadArray {
 
     public:
 
         // member variables
-        vector<Quad> quads;
+        vector<Quad> quads;     // stores all generated quads in a vector
 
         // member functions
-        void print_quads();
+        void print_quads();     // function to print all quads
 
 };
 
-/*
-    Class to represent a parameter
-    class param
-    ------------
-    Member Variables:
-        name: string        Name of the parameter
-        type: data_type      Type of the parameter
-*/
-
+// class to represent a parameter
 class Parameter {
 
     public:
 
         // member variables
-        string name;
-        SymbolType type;
+        string name;            // parameter name
+        SymbolType type;        // parameter type
 
 };
 
-
-/*
-    Class to denote an expression
-    class expression
-    ------------
-    Member Variables:
-        instr: int                  The instruction number of the expression
-        type: data_type              Type of the expression
-        loc: string                 The symbol table entry 
-        truelist: list<int>         Truelist for boolean expressions
-        falselist: list<int>        Falselist for boolean expressions
-        nextlist: list<int>         Nextlist for statement expressions
-        fold: int                   Useful for arrays and pointers
-        folder: string*             Useful for arrays and pointers
-    Member Methods:
-        expression()
-        - Constructor
-*/
 class Expression {
 
     public:
 
         // member variables
-        int instr;
-        data_type type;
-        string addr;
-        list<int> truelist;
-        list<int> falselist;
-        list<int> nextlist;
-        int fold;
-        string* folder;
+        int instr;                  // instruction number of the expression
+        data_type type;             // Type of the expression
+        string addr;                // The symbol table entry 
+        list<int> truelist;         // Truelist for boolean expressions
+        list<int> falselist;        // Falselist for boolean expressions
+        list<int> nextlist;         // Nextlist for statement expressions
+        int dim;                    // Used to represent array dimensions
+        string* name;               // Symbol name for array expression
 
         // constructor
         Expression();
 
 };
-
 
 /*
     Class to represent a declaration

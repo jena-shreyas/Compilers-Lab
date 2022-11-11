@@ -1,3 +1,11 @@
+/*
+    Compilers Lab Assignment - 6
+    Group Members :-
+        Pranav Nyati - 20CS30037
+        Shreyas Jena - 20CS30049
+*/
+
+// cxx file defining functionalities for generation of TAC
 #include "assn6_20CS30037_20CS30049_translator.h"
 #include <iomanip>
 using namespace std;
@@ -44,10 +52,12 @@ Symbol::Symbol(): nested_table(NULL) {}
 // Implementations of constructors and functions for the SymbolTable class
 SymbolTable::SymbolTable(): offset(0) {}
 
+// function to look up a symbol in the symbol table
 Symbol* SymbolTable::lookup(string name, data_type t, int pc) 
 {
-    if (table.count(name) == 0) 
+    if (table.count(name) == 0)         // if symbol is not present, create a new entry anf add to symbol table
     {
+        // create a new symbol and initialize attributes
         Symbol* sym = new Symbol();
         sym->name = name;
         sym->type.type = t;
@@ -75,70 +85,81 @@ Symbol* SymbolTable::lookup(string name, data_type t, int pc)
     return table[name];
 }
 
+// function to find occurrence of symbol in the global symbol table
 Symbol* SymbolTable::find_glbl(string name) 
 {
     return (table.count(name) ? table[name] : NULL);
 }
 
+// function to generate a temporary variable and add to symbol table
 string SymbolTable::gentemp(data_type t) 
 {
     // Create the name for the temporary
-    string tempName = "t" + to_string(SymbolTable::temp_count++);
+    string temp_name = "t" + to_string(SymbolTable::temp_count);
+    SymbolTable::temp_count++;
     
-    // Initialize the required attributes
+    // Create a new symbol and initialize the required attributes
     Symbol* sym = new Symbol();
-    sym->name = tempName;
+    sym->name = temp_name;
     sym->size = sizeOfType(t);
     sym->offset = offset;
     sym->type.type = t;
     sym->init_val = NULL;
 
-    offset += sym->size;
-    symbols.push_back(sym);
-    table[tempName] = sym;  // Add the temporary to the symbol table
+    offset += sym->size;    // update offset
+    symbols.push_back(sym); // add symbol to list of symbols in symbol table
+    table[temp_name] = sym;  // Add the temporary to the symbol table
 
-    return tempName;
+    return temp_name;
 }
 
-void SymbolTable::print_table(string tableName) 
+// function to print symbol table
+void SymbolTable::print_table(string table_name) 
 {
 
     for (int i = 0; i < 120; i++) 
     {
-        cout << '-';
+        cout << '=';
     }
 
     cout << endl;
-    cout << "Symbol Table: " << setfill(' ') << left << setw(50) << tableName << endl;
+
+    // Symbol table heading
+    cout << "SYMBOL TABLE: " << setfill(' ') << left << setw(50) << table_name << endl;
 
     for (int i = 0; i < 120; i++)
-        cout << '-';
+    {
+        cout << '=';
+    }
 
     cout << endl;
 
 
     // Table Headers
-    cout << setfill(' ') << left << setw(25) <<  "Name";
-    cout << left << setw(25) << "Type";
-    cout << left << setw(20) << "Initial Value";
-    cout << left << setw(15) << "Size";
-    cout << left << setw(15) << "Offset";
-    cout << left << "Nested" << endl;
+    cout << setfill(' ') << left << setw(25) << "NAME";
+    cout << left << setw(25) << "TYPE";
+    cout << left << setw(25) << "INITIAL VALUE";
+    cout << left << setw(15) << "SIZE";
+    cout << left << setw(15) << "OFFSET";
+    cout << left << "NESTED TABLE" << endl;
 
-    for (int i = 0; i < 120; i++){        
-        cout << '-';
+    for (int i = 0; i < 120; i++)
+    {        
+        cout << '=';
     }
 
     cout << endl;
 
     // For storing nested symbol tables
-    vector<pair<string, SymbolTable*>> tableList;
+    vector<pair<string, SymbolTable*>> table_list;
 
     // Print the symbols in the symbol table
     for (int i = 0; i < (int)symbols.size(); i++) 
     {
 
         Symbol* sym = symbols[i];
+
+        // print symbol attributes in formatted manner
         cout << left << setw(25) << sym->name;
         cout << left << setw(25) << checkType(sym->type);
         cout << left << setw(20) << getInitVal(sym);
@@ -146,11 +167,12 @@ void SymbolTable::print_table(string tableName)
         cout << left << setw(15) << sym->offset;
         cout << left;
 
+        // if symbol is actually a function name
         if (sym->nested_table != NULL) 
         {
-            string nested_tableName = tableName + "." + sym->name;
-            cout << nested_tableName << endl;
-            tableList.push_back({nested_tableName, sym->nested_table});
+            string nested_table_name = table_name + "." + sym->name;        
+            cout << nested_table_name << endl;
+            table_list.push_back({nested_table_name, sym->nested_table});       // add nested table to table list
         }
 
         else
@@ -160,13 +182,13 @@ void SymbolTable::print_table(string tableName)
 
     for (int i = 0; i < 120; i++)
     {
-        cout << '-';
+        cout << '=';
     }
 
     cout << endl << endl;
 
     // Recursively call the print function for the nested symbol tables
-    for (vector<pair<string, SymbolTable*>>::iterator it = tableList.begin(); it != tableList.end(); it++) 
+    for (auto it = table_list.begin(); it != table_list.end(); it++) 
     {
         pair<string, SymbolTable*> p = (*it);
         p.second->print_table(p.first);
@@ -329,7 +351,7 @@ void QuadArray::print_quads() {
 
 
 // Implementations of constructors and functions for the expression class
-Expression::Expression(): fold(0), folder(NULL) {}
+Expression::Expression(): dim(0), name(NULL) {}
 
 
 // Overloaded emit functions
