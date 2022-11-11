@@ -44,10 +44,11 @@ Symbol::Symbol(): nested_table(NULL) {}
 // Implementations of constructors and functions for the SymbolTable class
 SymbolTable::SymbolTable(): offset(0) {}
 
+// function to look up a variable in the symbol table
 Symbol* SymbolTable::lookup(string name, data_type t, int pc) 
 {
-    if (table.count(name) == 0) 
-    {
+    if (table.count(name) == 0)         // if table doesn't contain an occurence of the var name, 
+    {                                   // create a new symbol and add
         Symbol* sym = new Symbol();
         sym->name = name;
         sym->type.type = t;
@@ -80,24 +81,25 @@ Symbol* SymbolTable::find_glbl(string name)
     return (table.count(name) ? table[name] : NULL);
 }
 
+// function to generate temporary variable in symbol table
 string SymbolTable::gentemp(data_type t) 
 {
-    // Create the name for the temporary
-    string tempName = "t" + to_string(SymbolTable::temp_count++);
+    // Create a name for the temporary variable
+    string temp_name = "t" + to_string(SymbolTable::temp_count++);
     
     // Initialize the required attributes
     Symbol* sym = new Symbol();
-    sym->name = tempName;
+    sym->name = temp_name;
     sym->size = sizeOfType(t);
     sym->offset = offset;
     sym->type.type = t;
     sym->init_val = NULL;
 
-    offset += sym->size;
-    symbols.push_back(sym);
-    table[tempName] = sym;  // Add the temporary to the symbol table
+    offset += sym->size;     // update offset value
+    symbols.push_back(sym);  // add new symbol to list of symbols in symbol table
+    table[temp_name] = sym;  // Add the temporary to the symbol table
 
-    return tempName;
+    return temp_name;
 }
 
 void SymbolTable::print_table(string tableName) 
