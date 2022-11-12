@@ -78,9 +78,9 @@ class SymbolType {
 
     public:
 
-        int pointers;                   // useful for pointer types
+        int num_ptrs;                   // useful for pointer types
         data_type type;                  // type of symbol (i.e, E.type)
-        data_type base_type;              // In case of arrays, points to base type; in case of pointers, points to the type of value pointed
+        data_type base_type;              // In case of arrays, points to base type; in case of num_ptrs, points to the type of value pointed
         vector<int> dims;               // In case of array type, this is used to store array dimensions
 
 };
@@ -121,7 +121,6 @@ class Symbol {
 };
 
 // class to represent a symbol table
-
 class SymbolTable {
 
     public:
@@ -204,86 +203,56 @@ class Expression {
 
 };
 
-/*
-    Class to represent a declaration
-    class declaration
-    ------------
-    Member Variables:
-        name: string                Name of the declaration
-        pointers: int               Number of pointers
-        type: data_type              Type of the declaration
-        li: vector<int>             List of instructions for the declaration
-        init_val: expression*        Initial value of the declaration
-        pc: int                     Useful for pointers and arrays
-*/
+// class to represent a declaration
 class Declaration {
 
     public:
 
         // member variables
-        string name;
-        int pointers;
-        data_type type;
-        data_type nextType;
-        vector<int> li;
-        Expression* init_val;
-        int pc;
+        string name;                // Name of the declaration
+        int num_ptrs;               // Number of num_ptrs
+        data_type type;             // type of declaration
+        data_type nextType;         // defines base type (for arrays or pointers)
+        vector<int> li;             // List of instructions for the declaration
+        Expression* init_val;       // Initial value of the declaration
+        int pc;                     // Useful for num_ptrs and arrays
 
 };
 
 
-/*
-    An overloaded method to add a (newly generated) quad of the form: result = arg1 op arg2 where op usually is a binary operator. 
-    If arg2 is missing, op is unary. If op also is missing, this is a copy instruction.
-    It is overloaded for different types of quads (int, float or string)
-*/
+//  An overloaded functon to add a new Quad of the form: result = arg1 op arg2 
+//  overloaded for different types of arg1 (int, float or string)
 void emit(string result, string arg1, string arg2, opcode op);
 void emit(string result, int constant, opcode op);
 void emit(string result, char constant, opcode op);
 void emit(string result, float constant, opcode op);
 
 
-/*
-    A global function to create a new list containing only i, an index into the array of quads, 
-    and to return a pointer to the newly created list
-*/
+// function creates a new list containing an index i into the array of instructions
+// and returns a pointer to the newly created list
 list<int> makelist(int i);
 
-/*
-    A global function to concatenate two lists list1 and list2 and to return a pointer to the concatenated list
-*/
+// function merges two lists and returns a pointer to the merged list
 list<int> merge(list<int> list1, list<int> list2);
 
-/*
-    A global function to insert address as the target label for each of the quads on the list l
-*/
+// function to insert address as the target label for each of the instructions on the list l
 void backpatch(list<int> l, int address);
 
-/*
-    Converts a symbol of one type to another and returns a pointer to the converted symbol
-*/
+// Converts a symbol of one type to another and returns a pointer to the converted symbol
 void convertToType(Expression* arg, Expression* res, data_type toType);
 
 void convertToType(string t, data_type to, string f, data_type from);
 
-/*
-    Converts an int to a bool and adds required attributes
-*/
+//  function to convert an int to a bool
 void convertIntToBool(Expression* expr);
 
-/*
-    Auxiliary function to get the size of a type
-*/
+// Auxiliary function to get the size of a type
 int sizeOfType(data_type t);
 
-/*
-    Auxiliary function to print a type
-*/
+// Auxiliary function to print a type
 string checkType(SymbolType t);
 
-/*
-    Auxiliary function to get the initial value of a symbol
-*/
+// Auxiliary function to get the initial value of a symbol
 string getInitVal(Symbol* sym);
 
 #endif

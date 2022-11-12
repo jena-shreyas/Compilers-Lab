@@ -120,9 +120,9 @@ void quadCode(Quad quad, ofstream &asm_file)
     string toPrint1 = "", toPrint2 = "", toPrintRes = "";
     int off1 = 0, off2 = 0, offRes = 0;
 
-    Symbol *loc1 = SymTbl->lookup(quad.arg1);
-    Symbol *loc2 = SymTbl->lookup(quad.arg2);
-    Symbol *loc3 = SymTbl->lookup(quad.result);
+    Symbol *addr1 = SymTbl->lookup(quad.arg1);
+    Symbol *addr2 = SymTbl->lookup(quad.arg2);
+    Symbol *addr3 = SymTbl->lookup(quad.result);
     Symbol *glb1 = SymTbl_Global.find_glbl(quad.arg1);
     Symbol *glb2 = SymTbl_Global.find_glbl(quad.arg2);
     Symbol *glb3 = SymTbl_Global.find_glbl(quad.result);
@@ -130,11 +130,11 @@ void quadCode(Quad quad, ofstream &asm_file)
     if (SymTbl != &SymTbl_Global)
     {
         if (glb1 == NULL)
-            off1 = loc1->offset;
+            off1 = addr1->offset;
         if (glb2 == NULL)
-            off2 = loc2->offset;
+            off2 = addr2->offset;
         if (glb3 == NULL)
-            offRes = loc3->offset;
+            offRes = addr3->offset;
 
         if (quad.arg1[0] < '0' || quad.arg1[0] > '9')
         {
@@ -170,9 +170,9 @@ void quadCode(Quad quad, ofstream &asm_file)
 
     if (quad.op == ASSIGN)
     {
-        if (quad.result[0] != 't' || loc3->type.type == INT || loc3->type.type == POINTER)
+        if (quad.result[0] != 't' || addr3->type.type == INT || addr3->type.type == POINTER)
         {
-            if (loc3->type.type != POINTER)
+            if (addr3->type.type != POINTER)
             {
                 if (quad.arg1[0] < '0' || quad.arg1[0] > '9')
                 {
@@ -395,7 +395,7 @@ void quadCode(Quad quad, ofstream &asm_file)
         if (glb3 != NULL)
             t = glb3->type.type;
         else
-            t = loc3->type.type;
+            t = addr3->type.type;
         if (t == INT)
             paramSize = _SIZE_INT;
         else if (t == CHAR)
@@ -409,11 +409,11 @@ void quadCode(Quad quad, ofstream &asm_file)
             ss << "\tmovq\t$" << quad.result << ", %rax" << endl;
         else
         {
-            if (loc3->type.type != ARRAY)
+            if (addr3->type.type != ARRAY)
             {
-                if (loc3->type.type != POINTER)
+                if (addr3->type.type != POINTER)
                     ss << "\tmovq\t" << toPrintRes << ", %rax" << endl;
-                else if (loc3 == NULL)
+                else if (addr3 == NULL)
                     ss << "\tleaq\t" << toPrintRes << ", %rax" << endl;
                 else
                     ss << "\tmovq\t" << toPrintRes << ", %rax" << endl;

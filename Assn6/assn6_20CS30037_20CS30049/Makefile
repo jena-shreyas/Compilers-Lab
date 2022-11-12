@@ -39,39 +39,40 @@ test: tinyC lib$(BASE).a
 	@mkdir -p test_outputs
 	@mkdir -p bin
 
-	@echo "\nRunning Test 1\n"
+	@echo "\nTesting tinyC on sample test C files ...\n"
+	@echo "\nTEST 1 ...\n"
 	./tinyC 1 < test_inputs/$(BASE)_test1.c > test_outputs/$(BASE)_quads1.out
 	mv $(BASE)_1.s test_outputs/$(BASE)_1.s
 	gcc -c test_outputs/$(BASE)_1.s -o test_outputs/$(BASE)_1.o
 	gcc test_outputs/$(BASE)_1.o -o bin/test1 -L. -l$(BASE) -no-pie
 
-	@echo "\nRunning Test 2\n"
+	@echo "\nTEST 2\n"
 	./tinyC 2 < test_inputs/$(BASE)_test2.c > test_outputs/$(BASE)_quads2.out
 	mv $(BASE)_2.s test_outputs/$(BASE)_2.s
 	gcc -c test_outputs/$(BASE)_2.s -o test_outputs/$(BASE)_2.o
 	gcc test_outputs/$(BASE)_2.o -o bin/test2 -L. -l$(BASE) -no-pie
 
-	@echo "\nRunning Test 3\n"
+	@echo "\nTEST 3\n"
 	./tinyC 3 < test_inputs/$(BASE)_test3.c > test_outputs/$(BASE)_quads3.out
 	mv $(BASE)_3.s test_outputs/$(BASE)_3.s
 	gcc -c test_outputs/$(BASE)_3.s -o test_outputs/$(BASE)_3.o
 	gcc test_outputs/$(BASE)_3.o -o bin/test3 -L. -l$(BASE) -no-pie
 
-	@echo "\nRunning Test 4\n"
+	@echo "\nTEST 4\n"
 	./tinyC 4 < test_inputs/$(BASE)_test4.c > test_outputs/$(BASE)_quads4.out
 	mv $(BASE)_4.s test_outputs/$(BASE)_4.s
 	gcc -c test_outputs/$(BASE)_4.s -o test_outputs/$(BASE)_4.o
 	gcc test_outputs/$(BASE)_4.o -o bin/test4 -L. -l$(BASE) -no-pie
 
-	@echo "\nRunning Test 5\n"
+	@echo "\nTEST 5\n"
 	./tinyC 5 < test_inputs/$(BASE)_test5.c > test_outputs/$(BASE)_quads5.out
 	mv $(BASE)_5.s test_outputs/$(BASE)_5.s
 	gcc -c test_outputs/$(BASE)_5.s -o test_outputs/$(BASE)_5.o
 	gcc test_outputs/$(BASE)_5.o -o bin/test5 -L. -l$(BASE) -no-pie
 
-	@echo "\nThe three address quads, assembly files and object files are in test_outputs/\n"
+	@echo "\nTAC quads and asm files saved to test_outputs .../\n"
 	@echo "The binaries for the test files are in bin/\n"
 
 clean:
 	rm -f lex.yy.c *.tab.c *.tab.h *.output *.o *.s *.a *.out *.gch tinyC test_outputs/* bin/*
-	rmdir bin
+	rm -rf bin

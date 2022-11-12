@@ -48,7 +48,6 @@ void SymbolValue::init(float val)
 // Implementations of constructors and functions for the symbol class
 Symbol::Symbol(): nested_table(NULL) {}
 
-
 // Implementations of constructors and functions for the SymbolTable class
 SymbolTable::SymbolTable(): offset(0) {}
 
@@ -74,7 +73,7 @@ Symbol* SymbolTable::lookup(string name, data_type t, int pc)
         {
             sym->size = _SIZE_POINTER;
             sym->type.base_type = t;
-            sym->type.pointers = pc;
+            sym->type.num_ptrs = pc;
             sym->type.type = ARRAY;
         }
 
@@ -200,6 +199,7 @@ void SymbolTable::print_table(string table_name)
 // Implementations of constructors and functions for the Quad class
 Quad::Quad(string res_, string arg1_, string arg2_, opcode op_): op(op_), arg1(arg1_), arg2(arg2_), result(res_) {}
 
+// function to print quad
 string Quad::print_quad() 
 {
 
@@ -317,8 +317,7 @@ string Quad::print_quad()
     return out;
 }
 
-
-// Implementations of constructors and functions for the QuadArray class
+// function to print list of TAC quads
 void QuadArray::print_quads() {
 
     for (int i = 0; i < 120; i++)
@@ -350,9 +349,8 @@ void QuadArray::print_quads() {
 }
 
 
-// Implementations of constructors and functions for the expression class
+// Implementations of constructors for the expression class
 Expression::Expression(): dim(0), name(NULL) {}
-
 
 // Overloaded emit functions
 void emit(string result, string arg1, string arg2, opcode op) 
@@ -443,6 +441,7 @@ void convertToType(Expression* arg, Expression* res, data_type toType)
     }
 }
 
+// function to convert from one type to another
 void convertToType(string t, data_type to, string f, data_type from) 
 {
     if (to == from)
@@ -544,7 +543,7 @@ string checkType(SymbolType t)
         else if (t.base_type == FLOAT)
             tp += "float";
 
-        tp += string(t.pointers, '*');
+        tp += string(t.num_ptrs, '*');
         return tp;
     }
 

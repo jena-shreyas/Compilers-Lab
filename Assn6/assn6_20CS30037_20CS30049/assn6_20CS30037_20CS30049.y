@@ -199,7 +199,7 @@ postfix_expression:
             if(!($1->dim)) 
             {
                 f = SymTbl->gentemp(INT);                       // Generate a new temporary variable
-                emit(f, 0, ASSIGN);
+                emit(f, 0, ASSIGN);                             // Emit the corresponding quad
                 $1->name = new string(f);
             }
 
@@ -1027,7 +1027,7 @@ declaration:
                     SymTbl = &SymTbl_Global;
                     emit(currDec->name, "", "", FUNC_END);
                     Symbol* one = SymTbl->lookup(currDec->name);        // Create an entry for the function
-                    Symbol* two = one->nested_table->lookup("RETVAL", currType, currDec->pointers);
+                    Symbol* two = one->nested_table->lookup("RETVAL", currType, currDec->num_ptrs);
                     one->size = 0;
                     one->init_val = NULL;
                     continue;
@@ -1035,7 +1035,7 @@ declaration:
 
                 Symbol* three = SymTbl->lookup(currDec->name, currType);        // Create an entry for the variable in the symbol table
                 three->nested_table = NULL;
-                if(currDec->li == vector<int>() && currDec->pointers == 0) {
+                if(currDec->li == vector<int>() && currDec->num_ptrs == 0) {
                     three->type.type = currType;
                     three->size = currSize;
                     if(currDec->init_val != NULL) {
@@ -1058,10 +1058,10 @@ declaration:
                     three->size = sz;
                     SymTbl->offset -= 4;
                 }
-                else if(currDec->pointers != 0) {               // Handle pointer types
+                else if(currDec->num_ptrs != 0) {               // Handle pointer types
                     three->type.type = POINTER;
                     three->type.base_type = currType;
-                    three->type.pointers = currDec->pointers;
+                    three->type.num_ptrs = currDec->num_ptrs;
                     SymTbl->offset += (_SIZE_POINTER - currSize);
                     three->size = _SIZE_POINTER;
                 }
@@ -1221,12 +1221,12 @@ declarator:
         pointer direct_declarator
         {
             $$ = $2;
-            $$->pointers = $1;
+            $$->num_ptrs = $1;
         }
         | direct_declarator
         {
             $$ = $1;
-            $$->pointers = 0;
+            $$->num_ptrs = 0;
         }
         ;
 
@@ -1632,7 +1632,7 @@ function_prototype:
             Declaration* currDec = $2;
             Symbol* sym = SymTbl_Global.lookup(currDec->name);
             if(currDec->type == FUNCTION) {
-                Symbol* retval = sym->nested_table->lookup("RETVAL", currType, currDec->pointers);   // Create entry for return value
+                Symbol* retval = sym->nested_table->lookup("RETVAL", currType, currDec->num_ptrs);   // Create entry for return value
                 sym->size = 0;
                 sym->init_val = NULL;
             }
