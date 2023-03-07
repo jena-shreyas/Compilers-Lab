@@ -1,5 +1,4 @@
-/*  
-COMPILERS LAB: ASSIGNMENT 3  (Lexer for TinyC) 
+/*  COMPILERS LAB: ASSIGNMENT 3  (Lexer for TinyC) 
     PRANAV NYATI (ROLL : 20CS30037) 
     SHREYAS JENA (ROLL : 20CS30049) 
 */
@@ -23,7 +22,6 @@ inline int cube(int s) {return s*s*s;}
 
 void main(){
 
-    // 
 
     // Testing for keywords
 
